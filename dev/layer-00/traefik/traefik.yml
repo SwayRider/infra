@@ -1,0 +1,29 @@
+entryPoints:
+  web:
+    address: ":80"
+  websecure:
+    address: ":443"
+  traefik:
+    address: ":8080"
+
+providers:
+  docker:
+    exposedByDefault: false
+    network: net-sw-dev-proxy
+
+api:
+  dashboard: true
+  insecure: true
+
+log:
+  level: DEBUG
+
+accessLog: {}
+
+certificatesResolvers:
+  letsencrypt:
+    acme:
+      email: maarten@hevanto.be
+      storage: /letsencrypt/acme.json
+      httpChallenge:
+        entryPoint: web

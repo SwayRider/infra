@@ -1,0 +1,132 @@
+networks:
+  net-sw-dev-data:
+    external: true
+
+  net-sw-dev-valhalla:
+    external: true
+
+  net-sw-dev-pelias:
+    external: true
+
+  net-sw-dev-sw-internal:
+    name: net-sw-dev-sw-internal
+    driver: bridge
+    attachable: true
+    ipam:
+      driver: default
+      config:
+        - subnet: 10.10.20.0/24
+
+services:
+  authservice:
+    image: ghcr.io/swayrider/authservice:latest
+    container_name: sw-dev-authservice
+    restart: unless-stopped
+    environment:
+      - "DB_HOST=postgres"
+      - "DB_PORT=5432"
+      - "DB_NAME=authdb"
+      - "DB_USER=${POSTGRES_USER}"
+      - "DB_PASSWORD=${POSTGRES_PASSWORD}"
+      - "ADMIN_EMAIL=${AUTH_ADMIN_EMAIL}"
+      - "ADMIN_PASSWORD=${AUTH_ADMIN_PASSWORD}"
+      - "MAILER_ADDRESS=${AUTH_MAILER_ADDRESS}"
+      - "MAILSERVICE_HOST=mailservice"
+      - "MAILSERVICE_PORT=8081"
+    ports:
+      - "34001:8080"
+      - "34101:8081"
+      - "34201:8000"
+    networks:
+      - net-sw-dev-sw-internal
+      - net-sw-dev-data
+
+  mailservice:
+    image: ghcr.io/swayrider/mailservice:latest
+    container_name: sw-dev-mailservice
+    restart: unless-stopped
+    environment:
+      - "SMTP_HOST=mail.hevanto-it.com"
+      - "SMTP_PORT=587"
+      - "SMTP_USER=${MAIL_SMTP_USER}"
+      - "SMTP_PASSWORD=${MAIL_SMTP_PASSWORD}"
+      - "AUTHSERVICE_HOST=authservice"
+      - "AUTHSERVICE_PORT=8081"
+    ports:
+      - "34002:8080"
+      - "34102:8081"
+    networks:
+      - net-sw-dev-sw-internal
+      - net-sw-dev-data
+
+  regionservice:
+    image: ghcr.io/swayrider/regionservice:latest
+    container_name: sw-dev-regionservice
+    environment:
+      - "GEODATA_DIR=/data/geodata"
+    volumes:
+      - "${GEODATA_PATH}:/data/geodata:ro"
+    ports:
+      - "34003:8080"
+      - "34103:8081"
+    networks:
+      - net-sw-dev-sw-internal
+      - net-sw-dev-data
+
+  routerservice:
+    image: ghcr.io/swayrider/routerservice:latest
+    container_name: sw-dev-routerservice
+    environment:
+      - "PELIAS_PREFIX=pelias-"
+      - "PELIAS_API_POSTFIX=-api"
+      - "PELIAS_API_PORT=3100"
+      - "VALHALLA_PREFIX=valhalla-"
+      - "VALHALLA_PORT=8002"
+      - "REGIONSERVICE_HOST=regionservice"
+      - "REGIONSERVICE_PORT=8081"
+    ports:
+      - "34004:8080"
+      - "34104:8081"
+    networks:
+      - net-sw-dev-sw-internal
+      - net-sw-dev-valhalla
+      - net-sw-dev-pelias
+
+  searchservice:
+    image: ghcr.io/swayrider/searchservice:latest
+    container_name: sw-dev-searchservice
+    restart: unless-stopped
+    environment:
+      - "PELIAS_REGIONS=baltics-russia=http://pelias-baltics-russia-api:3100/v1,central-europe=http://pelias-central-europe-api:3100/v1,iberian-peninsula=http://pelias-iberian-peninsula-api:3100/v1,scandinavia=http://pelias-scandinavia-api:3100/v1,south-eastern-europe=http://pelias-south-eastern-europe-api:3100/v1,south-europe=http://pelias-south-europe-api:3100/v1,uk-iceland=http://pelias-uk-iceland-api:3100/v1,west-europe=http://pelias-west-europe-api:3100/v1"
+      - "REGIONSERVICE_HOST=regionservice"
+      - "REGIONSERVICE_PORT=8081"
+      - "AUTHSERVICE_HOST=authservice"
+      - "AUTHSERVICE_PORT=8081"
+    ports:
+      - "34006:8080"
+      - "34106:8081"
+    networks:
+      - net-sw-dev-sw-internal
+      - net-sw-dev-pelias
+
+  tilesservice:
+    image: ghcr.io/swayrider/tilesservice:latest
+    container_name: sw-dev-tilesservice
+    restart: unless-stopped
+    environment:
+      - "TILES_PATH=/data/tiles"
+      - "COMPRESSION_ENABLED=${TILESSERVICE_COMPRESSION_ENABLED}"
+      - "COMPRESSION_CACHE_SIZE=${TILESSERVICE_COMPRESSION_CACHE_SIZE}"
+      - "DISK_CACHE_ENABLED=${TILESSERVICE_DISK_CACHE_ENABLED}"
+      - "DISK_CACHE_PATH=/data/cache/tiles"
+      - "DISK_CACHE_MAX_FILES=${TILESSERVICE_DISK_CACHE_MAX_FILES}"
+      - "SERVICE_HOST=http://192.168.1.222"
+      - "SERVICE_PORT=34005"
+      - "SERVICE_PREFIX=/v1/tiles"
+    volumes:
+      - "${TILES_DATA_PATH}:/data/tiles:ro"
+      - "${TILES_CACHE_PATH}:/data/cache"
+    ports:
+      - "34005:8080"
+    networks:
+      - net-sw-dev-sw-internal

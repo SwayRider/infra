@@ -1,0 +1,100 @@
+networks:
+  net-sw-dev-proxy:
+    name: net-sw-dev-proxy
+    driver: bridge
+    attachable: true
+    ipam:
+      driver: default
+      config:
+        - subnet: 10.10.0.0/24
+
+  net-sw-dev-data:
+    name: net-sw-dev-data
+    driver: bridge
+    attachable: true
+    ipam:
+      driver: default
+      config:
+        - subnet: 10.10.1.0/24
+
+services:
+  traefik-init:
+    image: alpine
+    container_name: sw-dev-traefik-init
+    restart: no
+    volumes:
+      - "./traefik/letsencrypt:/letsencrypt"
+    command: 'sh -c "touch /letsencrypt/acme.json && chmod 600 /letsencrypt/acme.json"'
+
+  traefik:
+    image: traefik:latest
+    container_name: sw-dev-traefik
+    restart: unless-stopped
+    depends_on:
+      - traefik-init
+    command:
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--providers.docker.network=net-sw-dev-proxy"
+      - "--providers.file.directory=/etc/traefik/dynamic"
+      - "--providers.file.watch=true"
+    ports:
+      - "30080:80"
+      - "30443:443"
+      - "38080:8080"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+      - "./traefik/traefik.yml:/etc/traefik/traefik.yml:ro"
+      - "./traefik/traefik_dynamic.yml:/etc/traefik/dynamic/dynamic.yml:ro"
+      - "./traefik/letsencrypt:/letsencrypt"
+    networks:
+      - net-sw-dev-proxy
+
+  # Elastic search
+  prepare-elasticsearch:
+    image: alpine
+    container_name: sw-dev-prepare-elasticsearch
+    restart: no
+    volumes:
+      - "${ES_DATA_PATH}:/usr/share/elasticsearch/data"
+      - "${ES_SNAPSHOTS_PATH}:/usr/share/elasticsearch/snapshots"
+    command: [ "/bin/sh", "-c", "chown -R 1000 /usr/share/elasticsearch/data && chown -R 1000 /usr/share/elasticsearch/snapshots" ]
+
+  elasticsearch:
+    image: elasticsearch:7.17.28
+    container_name: sw-dev-elasticsearch
+    restart: unless-stopped
+    depends_on:
+      - prepare-elasticsearch
+    environment:
+      - "discovery.type=single-node"
+      - "ES_JAVA_OPTS=-Xms4g -Xmx4g"
+      - "xpack.security.enabled=false"
+      - "xpack.license.self_generated.type=basic"
+      - "path.repo=/usr/share/elasticsearch/snapshots"
+    entrypoint: ["sh", "-c", "/usr/local/bin/es-init.sh"]
+    ports:
+      - "39200:9200"
+      - "39300:9300"
+    volumes:
+      - "./elastic-init/es-init.sh:/usr/local/bin/es-init.sh"
+      - "${ES_DATA_PATH}:/usr/share/elasticsearch/data"
+      - "${ES_SNAPSHOTS_PATH}:/usr/share/elasticsearch/snapshots"
+    networks:
+      - net-sw-dev-data
+
+  # Postgres
+  postgres:
+    image: postgres:18
+    container_name: sw-dev-postgres
+    restart: unless-stopped
+    environment:
+      - "POSTGRES_USER=${POSTGRES_USER}"
+      - "POSTGRES_PASSWORD=${POSTGRES_PASSWORD}"
+      - "POSTGRES_DB=${POSTGRES_DB}"
+    ports:
+      - "35432:5432"
+    volumes:
+      - "${POSTGRES_DATA_PATH}:/var/lib/postgresql"
+    networks:
+      - net-sw-dev-data

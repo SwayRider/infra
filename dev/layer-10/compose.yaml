@@ -1,0 +1,688 @@
+networks:
+  net-sw-dev-proxy:
+    external: true
+
+  net-sw-dev-data:
+    external: true
+
+  net-sw-dev-valhalla:
+    name: net-sw-dev-valhalla
+    driver: bridge
+    attachable: true
+    ipam:
+      driver: default
+      config:
+        - subnet: 10.10.10.0/24
+
+  net-sw-dev-pelias:
+    name: net-sw-dev-pelias
+    driver: bridge
+    attachable: true
+    ipam:
+      driver: default
+      config:
+        - subnet: 10.10.11.0/24
+
+services:
+  valhalla-baltics-russia:
+    image: ghcr.io/nilsnolde/docker-valhalla/valhalla:latest
+    container_name: sw-dev-valhalla-baltics-russia
+    restart: unless-stopped
+    environment:
+      - "use_tiles_ignore_pbf=True"
+      - "force_rebuild=False"
+      - "server_threads=${VALHALLA_SERVER_THREADS}"
+    ports:
+      - "33001:8002"
+    volumes:
+      - '${GEODATA_PATH}:/geodata'
+      - '${VALHALLA_DATA_PATH}/baltics-russia:/custom_files'
+      - './valhalla/baltics-russia/valhalla.json:/custom_files/valhalla.json:ro'
+    networks:
+      - net-sw-dev-valhalla
+      - net-sw-dev-proxy
+    ulimits:
+      nofile:
+        soft: 65535
+        hard: 65535
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=net-sw-dev-proxy"
+      - "traefik.http.routers.sw-dev-valhalla-baltics-russia.rule=Host(`valhalla-baltics-russia.swayrider-dev.hevanto-it.com`)"
+      - "traefik.http.routers.sw-dev-valhalla-baltics-russia.entrypoints=websecure"
+      - "traefik.http.routers.sw-dev-valhalla-baltics-russia.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.sw-dev-valhalla-baltics-russia.tls=true"
+      - "traefik.http.services.sw-dev-valhalla-baltics-russia.loadbalancer.server.port=8002"
+
+  valhalla-central-europe:
+    image: ghcr.io/nilsnolde/docker-valhalla/valhalla:latest
+    container_name: sw-dev-valhalla-central-europe
+    restart: unless-stopped
+    environment:
+      - "use_tiles_ignore_pbf=True"
+      - "force_rebuild=False"
+      - "server_threads=${VALHALLA_SERVER_THREADS}"
+    ports:
+      - "33002:8002"
+    volumes:
+      - '${GEODATA_PATH}:/geodata'
+      - '${VALHALLA_DATA_PATH}/central-europe:/custom_files'
+      - './valhalla/central-europe/valhalla.json:/custom_files/valhalla.json:ro'
+    networks:
+      - net-sw-dev-valhalla
+      - net-sw-dev-proxy
+    ulimits:
+      nofile:
+        soft: 65535
+        hard: 65535
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=net-sw-dev-proxy"
+      - "traefik.http.routers.sw-dev-valhalla-central-europe.rule=Host(`valhalla-central-europe.swayrider-dev.hevanto-it.com`)"
+      - "traefik.http.routers.sw-dev-valhalla-central-europe.entrypoints=websecure"
+      - "traefik.http.routers.sw-dev-valhalla-central-europe.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.sw-dev-valhalla-central-europe.tls=true"
+      - "traefik.http.services.sw-dev-valhalla-central-europe.loadbalancer.server.port=8002"
+
+  valhalla-iberian-peninsula:
+    image: ghcr.io/nilsnolde/docker-valhalla/valhalla:latest
+    container_name: sw-dev-valhalla-iberian-peninsula
+    restart: unless-stopped
+    environment:
+      - "use_tiles_ignore_pbf=True"
+      - "force_rebuild=False"
+      - "server_threads=${VALHALLA_SERVER_THREADS}"
+    ports:
+      - "33003:8002"
+    volumes:
+      - '${GEODATA_PATH}:/geodata'
+      - '${VALHALLA_DATA_PATH}/iberian-peninsula:/custom_files'
+      - './valhalla/iberian-peninsula/valhalla.json:/custom_files/valhalla.json:ro'
+    networks:
+      - net-sw-dev-valhalla
+      - net-sw-dev-proxy
+    ulimits:
+      nofile:
+        soft: 65535
+        hard: 65535
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=net-sw-dev-proxy"
+      - "traefik.http.routers.sw-dev-valhalla-iberian-peninsula.rule=Host(`valhalla-iberian-peninsula.swayrider-dev.hevanto-it.com`)"
+      - "traefik.http.routers.sw-dev-valhalla-iberian-peninsula.entrypoints=websecure"
+      - "traefik.http.routers.sw-dev-valhalla-iberian-peninsula.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.sw-dev-valhalla-iberian-peninsula.tls=true"
+      - "traefik.http.services.sw-dev-valhalla-iberian-peninsula.loadbalancer.server.port=8002"
+
+  valhalla-scandinavia:
+    image: ghcr.io/nilsnolde/docker-valhalla/valhalla:latest
+    container_name: sw-dev-valhalla-scandinavia
+    restart: unless-stopped
+    environment:
+      - "use_tiles_ignore_pbf=True"
+      - "force_rebuild=False"
+      - "server_threads=${VALHALLA_SERVER_THREADS}"
+    ports:
+      - "33004:8002"
+    volumes:
+      - '${GEODATA_PATH}:/geodata'
+      - '${VALHALLA_DATA_PATH}/scandinavia:/custom_files'
+      - './valhalla/scandinavia/valhalla.json:/custom_files/valhalla.json:ro'
+    networks:
+      - net-sw-dev-valhalla
+      - net-sw-dev-proxy
+    ulimits:
+      nofile:
+        soft: 65535
+        hard: 65535
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=net-sw-dev-proxy"
+      - "traefik.http.routers.sw-dev-valhalla-scandinavia.rule=Host(`valhalla-scandinavia.swayrider-dev.hevanto-it.com`)"
+      - "traefik.http.routers.sw-dev-valhalla-scandinavia.entrypoints=websecure"
+      - "traefik.http.routers.sw-dev-valhalla-scandinavia.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.sw-dev-valhalla-scandinavia.tls=true"
+      - "traefik.http.services.sw-dev-valhalla-scandinavia.loadbalancer.server.port=8002"
+
+  valhalla-south-eastern-europe:
+    image: ghcr.io/nilsnolde/docker-valhalla/valhalla:latest
+    container_name: sw-dev-valhalla-south-eastern-europe
+    restart: unless-stopped
+    environment:
+      - "use_tiles_ignore_pbf=True"
+      - "force_rebuild=False"
+      - "server_threads=${VALHALLA_SERVER_THREADS}"
+    ports:
+      - "33005:8002"
+    volumes:
+      - '${GEODATA_PATH}:/geodata'
+      - '${VALHALLA_DATA_PATH}/south-eastern-europe:/custom_files'
+      - './valhalla/south-eastern-europe/valhalla.json:/custom_files/valhalla.json:ro'
+    networks:
+      - net-sw-dev-valhalla
+      - net-sw-dev-proxy
+    ulimits:
+      nofile:
+        soft: 65535
+        hard: 65535
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=net-sw-dev-proxy"
+      - "traefik.http.routers.sw-dev-valhalla-south-eastern-europe.rule=Host(`valhalla-south-eastern-europe.swayrider-dev.hevanto-it.com`)"
+      - "traefik.http.routers.sw-dev-valhalla-south-eastern-europe.entrypoints=websecure"
+      - "traefik.http.routers.sw-dev-valhalla-south-eastern-europe.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.sw-dev-valhalla-south-eastern-europe.tls=true"
+      - "traefik.http.services.sw-dev-valhalla-south-eastern-europe.loadbalancer.server.port=8002"
+
+  valhalla-south-europe:
+    image: ghcr.io/nilsnolde/docker-valhalla/valhalla:latest
+    container_name: sw-dev-valhalla-south-europe
+    restart: unless-stopped
+    environment:
+      - "use_tiles_ignore_pbf=True"
+      - "force_rebuild=False"
+      - "server_threads=${VALHALLA_SERVER_THREADS}"
+    ports:
+      - "33006:8002"
+    volumes:
+      - '${GEODATA_PATH}:/geodata'
+      - '${VALHALLA_DATA_PATH}/south-europe:/custom_files'
+      - './valhalla/south-europe/valhalla.json:/custom_files/valhalla.json:ro'
+    networks:
+      - net-sw-dev-valhalla
+      - net-sw-dev-proxy
+    ulimits:
+      nofile:
+        soft: 65535
+        hard: 65535
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=net-sw-dev-proxy"
+      - "traefik.http.routers.sw-dev-valhalla-south-europe.rule=Host(`valhalla-south-europe.swayrider-dev.hevanto-it.com`)"
+      - "traefik.http.routers.sw-dev-valhalla-south-europe.entrypoints=websecure"
+      - "traefik.http.routers.sw-dev-valhalla-south-europe.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.sw-dev-valhalla-south-europe.tls=true"
+      - "traefik.http.services.sw-dev-valhalla-south-europe.loadbalancer.server.port=8002"
+  valhalla-uk-iceland:
+    image: ghcr.io/nilsnolde/docker-valhalla/valhalla:latest
+    container_name: sw-dev-valhalla-uk-iceland
+    restart: unless-stopped
+    environment:
+      - "use_tiles_ignore_pbf=True"
+      - "force_rebuild=False"
+      - "server_threads=${VALHALLA_SERVER_THREADS}"
+    ports:
+      - "33007:8002"
+    volumes:
+      - '${GEODATA_PATH}:/geodata'
+      - '${VALHALLA_DATA_PATH}/uk-iceland:/custom_files'
+      - './valhalla/uk-iceland/valhalla.json:/custom_files/valhalla.json:ro'
+    networks:
+      - net-sw-dev-valhalla
+      - net-sw-dev-proxy
+    ulimits:
+      nofile:
+        soft: 65535
+        hard: 65535
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=net-sw-dev-proxy"
+      - "traefik.http.routers.sw-dev-valhalla-uk-iceland.rule=Host(`valhalla-uk-iceland.swayrider-dev.hevanto-it.com`)"
+      - "traefik.http.routers.sw-dev-valhalla-uk-iceland.entrypoints=websecure"
+      - "traefik.http.routers.sw-dev-valhalla-uk-iceland.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.sw-dev-valhalla-uk-iceland.tls=true"
+      - "traefik.http.services.sw-dev-valhalla-uk-iceland.loadbalancer.server.port=8002"
+
+  valhalla-west-europe:
+    image: ghcr.io/nilsnolde/docker-valhalla/valhalla:latest
+    container_name: sw-dev-valhalla-west-europe
+    restart: unless-stopped
+    environment:
+      - "use_tiles_ignore_pbf=True"
+      - "force_rebuild=False"
+      - "server_threads=${VALHALLA_SERVER_THREADS}"
+    ports:
+      - "33008:8002"
+    volumes:
+      - '${GEODATA_PATH}:/geodata'
+      - '${VALHALLA_DATA_PATH}/west-europe:/custom_files'
+      - './valhalla/iberian-peninsula/valhalla.json:/custom_files/valhalla.json:ro'
+    networks:
+      - net-sw-dev-valhalla
+      - net-sw-dev-proxy
+    ulimits:
+      nofile:
+        soft: 65535
+        hard: 65535
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=net-sw-dev-proxy"
+      - "traefik.http.routers.sw-dev-valhalla-west-europe.rule=Host(`valhalla-west-europe.swayrider-dev.hevanto-it.com`)"
+      - "traefik.http.routers.sw-dev-valhalla-west-europe.entrypoints=websecure"
+      - "traefik.http.routers.sw-dev-valhalla-west-europe.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.sw-dev-valhalla-west-europe.tls=true"
+      - "traefik.http.services.sw-dev-valhalla-west-europe.loadbalancer.server.port=8002"
+
+  pelias-placeholder:
+    image: pelias/placeholder:latest
+    container_name: sw-dev-pelias-placeholder
+    restart: unless-stopped
+    environment:
+      - "PLACEHOLDER_DATA=/data"
+    ports:
+      - "33100:3000"
+    volumes:
+      - '${GEODATA_PATH}:/geodata'
+      - "${PELIAS_DATA_PATH}/placeholder/data:/data"
+    networks:
+      - net-sw-dev-pelias
+      - net-sw-dev-proxy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=net-sw-dev-proxy"
+      - "traefik.http.routers.pelias-placeholder.rule=Host(`pelias-placeholder.swayrider-dev.hevanto-it.com`)"
+      - "traefik.http.routers.pelias-placeholder.entrypoints=websecure"
+      - "traefik.http.routers.pelias-placeholder.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.pelias-placeholder.tls=true"
+      - "traefik.http.services.pelias-placeholder.loadbalancer.server.port=3000"
+
+  pelias-libpostal:
+    image: pelias/libpostal-service:latest
+    container_name: sw-dev-pelias-libpostal
+    restart: unless-stopped
+    ports:
+      - "33101:4400"
+    networks:
+      - net-sw-dev-pelias
+      - net-sw-dev-proxy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=net-sw-dev-proxy"
+      - "traefik.http.routers.pelias-libpostal.rule=Host(`pelias-libpostal.swayrider-dev.hevanto-it.com`)"
+      - "traefik.http.routers.pelias-libpostal.entrypoints=websecure"
+      - "traefik.http.routers.pelias-libpostal.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.pelias-libpostal.tls=true"
+      - "traefik.http.services.pelias-libpostal.loadbalancer.server.port=4400"
+
+  pelias-baltics-russia-pip:
+    image: pelias/pip-service:latest
+    container_name: sw-dev-pelias-baltics-russia-pip
+    restart: unless-stopped
+    environment:
+      - "PELIAS_CONFIG=/etc/config/pelias.json"
+    ports:
+      - "33110:3102"
+    volumes:
+      - '${GEODATA_PATH}:/geodata'
+      - "${PELIAS_DATA_PATH}/baltics-russia/pip/whosonfirst:/data/whosonfirst"
+      - "${PELIAS_DATA_PATH}/baltics-russia/pip/config:/etc/config:ro"
+    networks:
+      - net-sw-dev-pelias
+      - net-sw-dev-proxy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=net-sw-dev-proxy"
+      - "traefik.http.routers.pelias-baltics-russia-pip.rule=Host(`pelias-baltics-russia-pip.swayrider-dev.hevanto-it.com`)"
+      - "traefik.http.routers.pelias-baltics-russia-pip.entrypoints=websecure"
+      - "traefik.http.routers.pelias-baltics-russia-pip.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.pelias-baltics-russia-pip.tls=true"
+      - "traefik.http.services.pelias-baltics-russia-pip.loadbalancer.server.port=3102"
+
+  pelias-central-europe-pip:
+    image: pelias/pip-service:latest
+    container_name: sw-dev-pelias-central-europe-pip
+    restart: unless-stopped
+    environment:
+      - "PELIAS_CONFIG=/etc/config/pelias.json"
+    ports:
+      - "33120:3102"
+    volumes:
+      - '${GEODATA_PATH}:/geodata'
+      - "${PELIAS_DATA_PATH}/central-europe/pip/whosonfirst:/data/whosonfirst"
+      - "${PELIAS_DATA_PATH}/central-europe/pip/config:/etc/config:ro"
+    networks:
+      - net-sw-dev-pelias
+      - net-sw-dev-proxy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=net-sw-dev-proxy"
+      - "traefik.http.routers.pelias-central-europe-pip.rule=Host(`pelias-central-europe-pip.swayrider-dev.hevanto-it.com`)"
+      - "traefik.http.routers.pelias-central-europe-pip.entrypoints=websecure"
+      - "traefik.http.routers.pelias-central-europe-pip.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.pelias-central-europe-pip.tls=true"
+      - "traefik.http.services.pelias-central-europe-pip.loadbalancer.server.port=3102"
+
+  pelias-iberian-peninsula-pip:
+    image: pelias/pip-service:latest
+    container_name: sw-dev-pelias-iberian-peninsula-pip
+    restart: unless-stopped
+    environment:
+      - "PELIAS_CONFIG=/etc/config/pelias.json"
+    ports:
+      - "33130:3102"
+    volumes:
+      - '${GEODATA_PATH}:/geodata'
+      - "${PELIAS_DATA_PATH}/iberian-peninsula/pip/whosonfirst:/data/whosonfirst"
+      - "${PELIAS_DATA_PATH}/iberian-peninsula/pip/config:/etc/config:ro"
+    networks:
+      - net-sw-dev-pelias
+      - net-sw-dev-proxy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=net-sw-dev-proxy"
+      - "traefik.http.routers.pelias-iberian-peninsula-pip.rule=Host(`pelias-iberian-peninsula-pip.swayrider-dev.hevanto-it.com`)"
+      - "traefik.http.routers.pelias-iberian-peninsula-pip.entrypoints=websecure"
+      - "traefik.http.routers.pelias-iberian-peninsula-pip.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.pelias-iberian-peninsula-pip.tls=true"
+      - "traefik.http.services.pelias-iberiean-peninsula-pip.loadbalancer.server.port=3102"
+
+  pelias-scandinavia-pip:
+    image: pelias/pip-service:latest
+    container_name: sw-dev-pelias-scandinavia-pip
+    restart: unless-stopped
+    environment:
+      - "PELIAS_CONFIG=/etc/config/pelias.json"
+    ports:
+      - "33140:3102"
+    volumes:
+      - '${GEODATA_PATH}:/geodata'
+      - "${PELIAS_DATA_PATH}/scandinavia/pip/whosonfirst:/data/whosonfirst"
+      - "${PELIAS_DATA_PATH}/scandinavia/pip/config:/etc/config:ro"
+    networks:
+      - net-sw-dev-pelias
+      - net-sw-dev-proxy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=net-sw-dev-proxy"
+      - "traefik.http.routers.pelias-scandinavia-pip.rule=Host(`pelias-scandinavia-pip.swayrider-dev.hevanto-it.com`)"
+      - "traefik.http.routers.pelias-scandinavia-pip.entrypoints=websecure"
+      - "traefik.http.routers.pelias-scandinavia-pip.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.pelias-scandinavia-pip.tls=true"
+      - "traefik.http.services.pelias-scandinavia-pip.loadbalancer.server.port=3102"
+
+  pelias-south-eastern-europe-pip:
+    image: pelias/pip-service:latest
+    container_name: sw-dev-pelias-south-eastern-europe-pip
+    restart: unless-stopped
+    environment:
+      - "PELIAS_CONFIG=/etc/config/pelias.json"
+    ports:
+      - "33150:3102"
+    volumes:
+      - '${GEODATA_PATH}:/geodata'
+      - "${PELIAS_DATA_PATH}/south-eastern-europe/pip/whosonfirst:/data/whosonfirst"
+      - "${PELIAS_DATA_PATH}/south-eastern-europe/pip/config:/etc/config:ro"
+    networks:
+      - net-sw-dev-pelias
+      - net-sw-dev-proxy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=net-sw-dev-proxy"
+      - "traefik.http.routers.pelias-south-eastern-europe-pip.rule=Host(`pelias-south-eastern-europe-pip.swayrider-dev.hevanto-it.com`)"
+      - "traefik.http.routers.pelias-south-eastern-europe-pip.entrypoints=websecure"
+      - "traefik.http.routers.pelias-south-eastern-europe-pip.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.pelias-south-eastern-europe-pip.tls=true"
+      - "traefik.http.services.pelias-south-eastern-europe-pip.loadbalancer.server.port=3102"
+
+  pelias-south-europe-pip:
+    image: pelias/pip-service:latest
+    container_name: sw-dev-pelias-south-europe-pip
+    restart: unless-stopped
+    environment:
+      - "PELIAS_CONFIG=/etc/config/pelias.json"
+    ports:
+      - "33160:3102"
+    volumes:
+      - '${GEODATA_PATH}:/geodata'
+      - "${PELIAS_DATA_PATH}/south-europe/pip/whosonfirst:/data/whosonfirst"
+      - "${PELIAS_DATA_PATH}/south-europe/pip/config:/etc/config:ro"
+    networks:
+      - net-sw-dev-pelias
+      - net-sw-dev-proxy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=net-sw-dev-proxy"
+      - "traefik.http.routers.pelias-south-europe-pip.rule=Host(`pelias-south-europe-pip.swayrider-dev.hevanto-it.com`)"
+      - "traefik.http.routers.pelias-south-europe-pip.entrypoints=websecure"
+      - "traefik.http.routers.pelias-south-europe-pip.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.pelias-south-europe-pip.tls=true"
+      - "traefik.http.services.pelias-south-europe-pip.loadbalancer.server.port=3102"
+
+  pelias-uk-iceland-pip:
+    image: pelias/pip-service:latest
+    container_name: sw-dev-pelias-uk-iceland-pip
+    restart: unless-stopped
+    environment:
+      - "PELIAS_CONFIG=/etc/config/pelias.json"
+    ports:
+      - "33170:3102"
+    volumes:
+      - '${GEODATA_PATH}:/geodata'
+      - "${PELIAS_DATA_PATH}/uk-iceland/pip/whosonfirst:/data/whosonfirst"
+      - "${PELIAS_DATA_PATH}/uk-iceland/pip/config:/etc/config:ro"
+    networks:
+      - net-sw-dev-pelias
+      - net-sw-dev-proxy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=net-sw-dev-proxy"
+      - "traefik.http.routers.pelias-uk-iceland-pip.rule=Host(`pelias-uk-iceland-pip.swayrider-dev.hevanto-it.com`)"
+      - "traefik.http.routers.pelias-uk-iceland-pip.entrypoints=websecure"
+      - "traefik.http.routers.pelias-uk-iceland-pip.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.pelias-uk-iceland-pip.tls=true"
+      - "traefik.http.services.pelias-uk-iceland-pip.loadbalancer.server.port=3102"
+
+  pelias-west-europe-pip:
+    image: pelias/pip-service:latest
+    container_name: sw-dev-pelias-west-europe-pip
+    restart: unless-stopped
+    environment:
+      - "PELIAS_CONFIG=/etc/config/pelias.json"
+    ports:
+      - "33180:3102"
+    volumes:
+      - '${GEODATA_PATH}:/geodata'
+      - "${PELIAS_DATA_PATH}/west-europe/pip/whosonfirst:/data/whosonfirst"
+      - "${PELIAS_DATA_PATH}/west-europe/pip/config:/etc/config:ro"
+    networks:
+      - net-sw-dev-pelias
+      - net-sw-dev-proxy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=net-sw-dev-proxy"
+      - "traefik.http.routers.pelias-west-europe-pip.rule=Host(`pelias-west-europe-pip.swayrider-dev.hevanto-it.com`)"
+      - "traefik.http.routers.pelias-west-europe-pip.entrypoints=websecure"
+      - "traefik.http.routers.pelias-west-europe-pip.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.pelias-west-europe-pip.tls=true"
+      - "traefik.http.services.pelias-west-europe-pip.loadbalancer.server.port=3102"
+
+  pelias-baltics-russia-api:
+    image: pelias/api:latest
+    container_name: sw-dev-pelias-baltics-russia-api
+    restart: unless-stopped
+    environment:
+      - "PELIAS_CONFIG=/etc/config/pelias.json"
+    ports:
+      - "33111:3100"
+    volumes:
+      - '${GEODATA_PATH}:/geodata'
+      - "${PELIAS_DATA_PATH}/baltics-russia/api/config:/etc/config:ro"
+    networks:
+      - net-sw-dev-pelias
+      - net-sw-dev-data
+      - net-sw-dev-proxy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=net-sw-dev-proxy"
+      - "traefik.http.routers.pelias-baltics-russia-api.rule=Host(`pelias-baltics-russia-api.swayrider-dev.hevanto-it.com`)"
+      - "traefik.http.routers.pelias-baltics-russia-api.entrypoints=websecure"
+      - "traefik.http.routers.pelias-baltics-russia-api.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.pelias-baltics-russia-api.tls=true"
+      - "traefik.http.services.pelias-baltics-russia-api.loadbalancer.server.port=3100"
+
+  pelias-central-europe-api:
+    image: pelias/api:latest
+    container_name: sw-dev-pelias-central-europe-api
+    restart: unless-stopped
+    environment:
+      - "PELIAS_CONFIG=/etc/config/pelias.json"
+    ports:
+      - "33121:3100"
+    volumes:
+      - '${GEODATA_PATH}:/geodata'
+      - "${PELIAS_DATA_PATH}/central-europe/api/config:/etc/config:ro"
+    networks:
+      - net-sw-dev-pelias
+      - net-sw-dev-data
+      - net-sw-dev-proxy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=net-sw-dev-proxy"
+      - "traefik.http.routers.pelias-central-europe-api.rule=Host(`pelias-central-europe-api.swayrider-dev.hevanto-it.com`)"
+      - "traefik.http.routers.pelias-central-europe-api.entrypoints=websecure"
+      - "traefik.http.routers.pelias-central-europe-api.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.pelias-central-europe-api.tls=true"
+      - "traefik.http.services.pelias-central-europe-api.loadbalancer.server.port=3100"
+
+  pelias-iberian-peninsula-api:
+    image: pelias/api:latest
+    container_name: sw-dev-pelias-iberian-peninsula-api
+    restart: unless-stopped
+    environment:
+      - "PELIAS_CONFIG=/etc/config/pelias.json"
+    ports:
+      - "33131:3100"
+    volumes:
+      - '${GEODATA_PATH}:/geodata'
+      - "${PELIAS_DATA_PATH}/iberian-peninsula/api/config:/etc/config:ro"
+    networks:
+      - net-sw-dev-pelias
+      - net-sw-dev-data
+      - net-sw-dev-proxy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=net-sw-dev-proxy"
+      - "traefik.http.routers.pelias-iberian-peninsula-api.rule=Host(`pelias-iberian-peninsula-api.swayrider-dev.hevanto-it.com`)"
+      - "traefik.http.routers.pelias-iberian-peninsula-api.entrypoints=websecure"
+      - "traefik.http.routers.pelias-iberian-peninsula-api.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.pelias-iberian-peninsula-api.tls=true"
+      - "traefik.http.services.pelias-iberian-peninsula-api.loadbalancer.server.port=3100"
+
+  pelias-scandinavia-api:
+    image: pelias/api:latest
+    container_name: sw-dev-pelias-scandinavia-api
+    restart: unless-stopped
+    environment:
+      - "PELIAS_CONFIG=/etc/config/pelias.json"
+    ports:
+      - "33141:3100"
+    volumes:
+      - '${GEODATA_PATH}:/geodata'
+      - "${PELIAS_DATA_PATH}/scandinavia/api/config:/etc/config:ro"
+    networks:
+      - net-sw-dev-pelias
+      - net-sw-dev-data
+      - net-sw-dev-proxy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=net-sw-dev-proxy"
+      - "traefik.http.routers.pelias-scandinavia-api.rule=Host(`pelias-scandinavia-api.swayrider-dev.hevanto-it.com`)"
+      - "traefik.http.routers.pelias-scandinavia-api.entrypoints=websecure"
+      - "traefik.http.routers.pelias-scandinavia-api.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.pelias-scandinavia-api.tls=true"
+      - "traefik.http.services.pelias-scandinavia-api.loadbalancer.server.port=3100"
+
+  pelias-south-eastern-europe-api:
+    image: pelias/api:latest
+    container_name: sw-dev-pelias-south-eastern-europe-api
+    restart: unless-stopped
+    environment:
+      - "PELIAS_CONFIG=/etc/config/pelias.json"
+    ports:
+      - "33151:3100"
+    volumes:
+      - '${GEODATA_PATH}:/geodata'
+      - "${PELIAS_DATA_PATH}/south-eastern-europe/api/config:/etc/config:ro"
+    networks:
+      - net-sw-dev-pelias
+      - net-sw-dev-data
+      - net-sw-dev-proxy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=net-sw-dev-proxy"
+      - "traefik.http.routers.pelias-south-eastern-europe-api.rule=Host(`pelias-south-eastern-europe-api.swayrider-dev.hevanto-it.com`)"
+      - "traefik.http.routers.pelias-south-eastern-europe-api.entrypoints=websecure"
+      - "traefik.http.routers.pelias-south-eastern-europe-api.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.pelias-south-eastern-europe-api.tls=true"
+      - "traefik.http.services.pelias-south-eastern-europe-api.loadbalancer.server.port=3100"
+
+  pelias-south-europe-api:
+    image: pelias/api:latest
+    container_name: sw-dev-pelias-south-europe-api
+    restart: unless-stopped
+    environment:
+      - "PELIAS_CONFIG=/etc/config/pelias.json"
+    ports:
+      - "33161:3100"
+    volumes:
+      - '${GEODATA_PATH}:/geodata'
+      - "${PELIAS_DATA_PATH}/south-europe/api/config:/etc/config:ro"
+    networks:
+      - net-sw-dev-pelias
+      - net-sw-dev-data
+      - net-sw-dev-proxy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=net-sw-dev-proxy"
+      - "traefik.http.routers.pelias-south-europe-api.rule=Host(`pelias-south-europe-api.swayrider-dev.hevanto-it.com`)"
+      - "traefik.http.routers.pelias-south-europe-api.entrypoints=websecure"
+      - "traefik.http.routers.pelias-south-europe-api.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.pelias-south-europe-api.tls=true"
+      - "traefik.http.services.pelias-south-europe-api.loadbalancer.server.port=3100"
+
+  pelias-uk-iceland-api:
+    image: pelias/api:latest
+    container_name: sw-dev-pelias-uk-iceland-api
+    restart: unless-stopped
+    environment:
+      - "PELIAS_CONFIG=/etc/config/pelias.json"
+    ports:
+      - "33171:3100"
+    volumes:
+      - '${GEODATA_PATH}:/geodata'
+      - "${PELIAS_DATA_PATH}/uk-iceland/api/config:/etc/config:ro"
+    networks:
+      - net-sw-dev-pelias
+      - net-sw-dev-data
+      - net-sw-dev-proxy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=net-sw-dev-proxy"
+      - "traefik.http.routers.pelias-uk-iceland-api.rule=Host(`pelias-uk-iceland-api.swayrider-dev.hevanto-it.com`)"
+      - "traefik.http.routers.pelias-uk-iceland-api.entrypoints=websecure"
+      - "traefik.http.routers.pelias-uk-iceland-api.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.pelias-uk-iceland-api.tls=true"
+      - "traefik.http.services.pelias-uk-iceland-api.loadbalancer.server.port=3100"
+
+  pelias-west-europe-api:
+    image: pelias/api:latest
+    container_name: sw-dev-pelias-west-europe-api
+    restart: unless-stopped
+    environment:
+      - "PELIAS_CONFIG=/etc/config/pelias.json"
+    ports:
+      - "33181:3100"
+    volumes:
+      - '${GEODATA_PATH}:/geodata'
+      - "${PELIAS_DATA_PATH}/west-europe/api/config:/etc/config:ro"
+    networks:
+      - net-sw-dev-pelias
+      - net-sw-dev-data
+      - net-sw-dev-proxy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=net-sw-dev-proxy"
+      - "traefik.http.routers.pelias-west-europe-api.rule=Host(`pelias-west-europe-api.swayrider-dev.hevanto-it.com`)"
+      - "traefik.http.routers.pelias-west-europe-api.entrypoints=websecure"
+      - "traefik.http.routers.pelias-west-europe-api.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.pelias-west-europe-api.tls=true"

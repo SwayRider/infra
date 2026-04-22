@@ -1,0 +1,10 @@
+dev/consul-*/services/**
+
+dev/certs/*
+dev/pg-certs/*
+!dev/certs/*.dev.ca.crt
+!dev/certs/*.dev.ca.key
+!dev/pg-certs/keepme
+
+dev-nomad
+dev-old
