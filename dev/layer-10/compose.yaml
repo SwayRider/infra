@@ -48,7 +48,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=net-sw-dev-proxy"
-      - "traefik.http.routers.sw-dev-valhalla-baltics-russia.rule=Host(`valhalla-baltics-russia.swayrider-dev.hevanto-it.com`)"
+      - "traefik.http.routers.sw-dev-valhalla-baltics-russia.rule=Host(`valhalla-baltics-russia.${DEV_DOMAIN}`)"
       - "traefik.http.routers.sw-dev-valhalla-baltics-russia.entrypoints=websecure"
       - "traefik.http.routers.sw-dev-valhalla-baltics-russia.tls.certresolver=letsencrypt"
       - "traefik.http.routers.sw-dev-valhalla-baltics-russia.tls=true"
@@ -78,7 +78,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=net-sw-dev-proxy"
-      - "traefik.http.routers.sw-dev-valhalla-central-europe.rule=Host(`valhalla-central-europe.swayrider-dev.hevanto-it.com`)"
+      - "traefik.http.routers.sw-dev-valhalla-central-europe.rule=Host(`valhalla-central-europe.${DEV_DOMAIN}`)"
       - "traefik.http.routers.sw-dev-valhalla-central-europe.entrypoints=websecure"
       - "traefik.http.routers.sw-dev-valhalla-central-europe.tls.certresolver=letsencrypt"
       - "traefik.http.routers.sw-dev-valhalla-central-europe.tls=true"
@@ -108,7 +108,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=net-sw-dev-proxy"
-      - "traefik.http.routers.sw-dev-valhalla-iberian-peninsula.rule=Host(`valhalla-iberian-peninsula.swayrider-dev.hevanto-it.com`)"
+      - "traefik.http.routers.sw-dev-valhalla-iberian-peninsula.rule=Host(`valhalla-iberian-peninsula.${DEV_DOMAIN}`)"
       - "traefik.http.routers.sw-dev-valhalla-iberian-peninsula.entrypoints=websecure"
       - "traefik.http.routers.sw-dev-valhalla-iberian-peninsula.tls.certresolver=letsencrypt"
       - "traefik.http.routers.sw-dev-valhalla-iberian-peninsula.tls=true"
@@ -138,7 +138,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=net-sw-dev-proxy"
-      - "traefik.http.routers.sw-dev-valhalla-scandinavia.rule=Host(`valhalla-scandinavia.swayrider-dev.hevanto-it.com`)"
+      - "traefik.http.routers.sw-dev-valhalla-scandinavia.rule=Host(`valhalla-scandinavia.${DEV_DOMAIN}`)"
       - "traefik.http.routers.sw-dev-valhalla-scandinavia.entrypoints=websecure"
       - "traefik.http.routers.sw-dev-valhalla-scandinavia.tls.certresolver=letsencrypt"
       - "traefik.http.routers.sw-dev-valhalla-scandinavia.tls=true"
@@ -168,7 +168,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=net-sw-dev-proxy"
-      - "traefik.http.routers.sw-dev-valhalla-south-eastern-europe.rule=Host(`valhalla-south-eastern-europe.swayrider-dev.hevanto-it.com`)"
+      - "traefik.http.routers.sw-dev-valhalla-south-eastern-europe.rule=Host(`valhalla-south-eastern-europe.${DEV_DOMAIN}`)"
       - "traefik.http.routers.sw-dev-valhalla-south-eastern-europe.entrypoints=websecure"
       - "traefik.http.routers.sw-dev-valhalla-south-eastern-europe.tls.certresolver=letsencrypt"
       - "traefik.http.routers.sw-dev-valhalla-south-eastern-europe.tls=true"
@@ -198,7 +198,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=net-sw-dev-proxy"
-      - "traefik.http.routers.sw-dev-valhalla-south-europe.rule=Host(`valhalla-south-europe.swayrider-dev.hevanto-it.com`)"
+      - "traefik.http.routers.sw-dev-valhalla-south-europe.rule=Host(`valhalla-south-europe.${DEV_DOMAIN}`)"
       - "traefik.http.routers.sw-dev-valhalla-south-europe.entrypoints=websecure"
       - "traefik.http.routers.sw-dev-valhalla-south-europe.tls.certresolver=letsencrypt"
       - "traefik.http.routers.sw-dev-valhalla-south-europe.tls=true"
@@ -227,7 +227,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=net-sw-dev-proxy"
-      - "traefik.http.routers.sw-dev-valhalla-uk-iceland.rule=Host(`valhalla-uk-iceland.swayrider-dev.hevanto-it.com`)"
+      - "traefik.http.routers.sw-dev-valhalla-uk-iceland.rule=Host(`valhalla-uk-iceland.${DEV_DOMAIN}`)"
       - "traefik.http.routers.sw-dev-valhalla-uk-iceland.entrypoints=websecure"
       - "traefik.http.routers.sw-dev-valhalla-uk-iceland.tls.certresolver=letsencrypt"
       - "traefik.http.routers.sw-dev-valhalla-uk-iceland.tls=true"
@@ -257,7 +257,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=net-sw-dev-proxy"
-      - "traefik.http.routers.sw-dev-valhalla-west-europe.rule=Host(`valhalla-west-europe.swayrider-dev.hevanto-it.com`)"
+      - "traefik.http.routers.sw-dev-valhalla-west-europe.rule=Host(`valhalla-west-europe.${DEV_DOMAIN}`)"
       - "traefik.http.routers.sw-dev-valhalla-west-europe.entrypoints=websecure"
       - "traefik.http.routers.sw-dev-valhalla-west-europe.tls.certresolver=letsencrypt"
       - "traefik.http.routers.sw-dev-valhalla-west-europe.tls=true"
@@ -280,7 +280,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=net-sw-dev-proxy"
-      - "traefik.http.routers.pelias-placeholder.rule=Host(`pelias-placeholder.swayrider-dev.hevanto-it.com`)"
+      - "traefik.http.routers.pelias-placeholder.rule=Host(`pelias-placeholder.${DEV_DOMAIN}`)"
       - "traefik.http.routers.pelias-placeholder.entrypoints=websecure"
       - "traefik.http.routers.pelias-placeholder.tls.certresolver=letsencrypt"
       - "traefik.http.routers.pelias-placeholder.tls=true"
@@ -298,7 +298,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=net-sw-dev-proxy"
-      - "traefik.http.routers.pelias-libpostal.rule=Host(`pelias-libpostal.swayrider-dev.hevanto-it.com`)"
+      - "traefik.http.routers.pelias-libpostal.rule=Host(`pelias-libpostal.${DEV_DOMAIN}`)"
       - "traefik.http.routers.pelias-libpostal.entrypoints=websecure"
       - "traefik.http.routers.pelias-libpostal.tls.certresolver=letsencrypt"
       - "traefik.http.routers.pelias-libpostal.tls=true"
@@ -322,7 +322,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=net-sw-dev-proxy"
-      - "traefik.http.routers.pelias-baltics-russia-pip.rule=Host(`pelias-baltics-russia-pip.swayrider-dev.hevanto-it.com`)"
+      - "traefik.http.routers.pelias-baltics-russia-pip.rule=Host(`pelias-baltics-russia-pip.${DEV_DOMAIN}`)"
       - "traefik.http.routers.pelias-baltics-russia-pip.entrypoints=websecure"
       - "traefik.http.routers.pelias-baltics-russia-pip.tls.certresolver=letsencrypt"
       - "traefik.http.routers.pelias-baltics-russia-pip.tls=true"
@@ -346,7 +346,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=net-sw-dev-proxy"
-      - "traefik.http.routers.pelias-central-europe-pip.rule=Host(`pelias-central-europe-pip.swayrider-dev.hevanto-it.com`)"
+      - "traefik.http.routers.pelias-central-europe-pip.rule=Host(`pelias-central-europe-pip.${DEV_DOMAIN}`)"
       - "traefik.http.routers.pelias-central-europe-pip.entrypoints=websecure"
       - "traefik.http.routers.pelias-central-europe-pip.tls.certresolver=letsencrypt"
       - "traefik.http.routers.pelias-central-europe-pip.tls=true"
@@ -370,7 +370,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=net-sw-dev-proxy"
-      - "traefik.http.routers.pelias-iberian-peninsula-pip.rule=Host(`pelias-iberian-peninsula-pip.swayrider-dev.hevanto-it.com`)"
+      - "traefik.http.routers.pelias-iberian-peninsula-pip.rule=Host(`pelias-iberian-peninsula-pip.${DEV_DOMAIN}`)"
       - "traefik.http.routers.pelias-iberian-peninsula-pip.entrypoints=websecure"
       - "traefik.http.routers.pelias-iberian-peninsula-pip.tls.certresolver=letsencrypt"
       - "traefik.http.routers.pelias-iberian-peninsula-pip.tls=true"
@@ -394,7 +394,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=net-sw-dev-proxy"
-      - "traefik.http.routers.pelias-scandinavia-pip.rule=Host(`pelias-scandinavia-pip.swayrider-dev.hevanto-it.com`)"
+      - "traefik.http.routers.pelias-scandinavia-pip.rule=Host(`pelias-scandinavia-pip.${DEV_DOMAIN}`)"
       - "traefik.http.routers.pelias-scandinavia-pip.entrypoints=websecure"
       - "traefik.http.routers.pelias-scandinavia-pip.tls.certresolver=letsencrypt"
       - "traefik.http.routers.pelias-scandinavia-pip.tls=true"
@@ -418,7 +418,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=net-sw-dev-proxy"
-      - "traefik.http.routers.pelias-south-eastern-europe-pip.rule=Host(`pelias-south-eastern-europe-pip.swayrider-dev.hevanto-it.com`)"
+      - "traefik.http.routers.pelias-south-eastern-europe-pip.rule=Host(`pelias-south-eastern-europe-pip.${DEV_DOMAIN}`)"
       - "traefik.http.routers.pelias-south-eastern-europe-pip.entrypoints=websecure"
       - "traefik.http.routers.pelias-south-eastern-europe-pip.tls.certresolver=letsencrypt"
       - "traefik.http.routers.pelias-south-eastern-europe-pip.tls=true"
@@ -442,7 +442,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=net-sw-dev-proxy"
-      - "traefik.http.routers.pelias-south-europe-pip.rule=Host(`pelias-south-europe-pip.swayrider-dev.hevanto-it.com`)"
+      - "traefik.http.routers.pelias-south-europe-pip.rule=Host(`pelias-south-europe-pip.${DEV_DOMAIN}`)"
       - "traefik.http.routers.pelias-south-europe-pip.entrypoints=websecure"
       - "traefik.http.routers.pelias-south-europe-pip.tls.certresolver=letsencrypt"
       - "traefik.http.routers.pelias-south-europe-pip.tls=true"
@@ -466,7 +466,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=net-sw-dev-proxy"
-      - "traefik.http.routers.pelias-uk-iceland-pip.rule=Host(`pelias-uk-iceland-pip.swayrider-dev.hevanto-it.com`)"
+      - "traefik.http.routers.pelias-uk-iceland-pip.rule=Host(`pelias-uk-iceland-pip.${DEV_DOMAIN}`)"
       - "traefik.http.routers.pelias-uk-iceland-pip.entrypoints=websecure"
       - "traefik.http.routers.pelias-uk-iceland-pip.tls.certresolver=letsencrypt"
       - "traefik.http.routers.pelias-uk-iceland-pip.tls=true"
@@ -490,7 +490,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=net-sw-dev-proxy"
-      - "traefik.http.routers.pelias-west-europe-pip.rule=Host(`pelias-west-europe-pip.swayrider-dev.hevanto-it.com`)"
+      - "traefik.http.routers.pelias-west-europe-pip.rule=Host(`pelias-west-europe-pip.${DEV_DOMAIN}`)"
       - "traefik.http.routers.pelias-west-europe-pip.entrypoints=websecure"
       - "traefik.http.routers.pelias-west-europe-pip.tls.certresolver=letsencrypt"
       - "traefik.http.routers.pelias-west-europe-pip.tls=true"
@@ -514,7 +514,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=net-sw-dev-proxy"
-      - "traefik.http.routers.pelias-baltics-russia-api.rule=Host(`pelias-baltics-russia-api.swayrider-dev.hevanto-it.com`)"
+      - "traefik.http.routers.pelias-baltics-russia-api.rule=Host(`pelias-baltics-russia-api.${DEV_DOMAIN}`)"
       - "traefik.http.routers.pelias-baltics-russia-api.entrypoints=websecure"
       - "traefik.http.routers.pelias-baltics-russia-api.tls.certresolver=letsencrypt"
       - "traefik.http.routers.pelias-baltics-russia-api.tls=true"
@@ -538,7 +538,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=net-sw-dev-proxy"
-      - "traefik.http.routers.pelias-central-europe-api.rule=Host(`pelias-central-europe-api.swayrider-dev.hevanto-it.com`)"
+      - "traefik.http.routers.pelias-central-europe-api.rule=Host(`pelias-central-europe-api.${DEV_DOMAIN}`)"
       - "traefik.http.routers.pelias-central-europe-api.entrypoints=websecure"
       - "traefik.http.routers.pelias-central-europe-api.tls.certresolver=letsencrypt"
       - "traefik.http.routers.pelias-central-europe-api.tls=true"
@@ -562,7 +562,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=net-sw-dev-proxy"
-      - "traefik.http.routers.pelias-iberian-peninsula-api.rule=Host(`pelias-iberian-peninsula-api.swayrider-dev.hevanto-it.com`)"
+      - "traefik.http.routers.pelias-iberian-peninsula-api.rule=Host(`pelias-iberian-peninsula-api.${DEV_DOMAIN}`)"
       - "traefik.http.routers.pelias-iberian-peninsula-api.entrypoints=websecure"
       - "traefik.http.routers.pelias-iberian-peninsula-api.tls.certresolver=letsencrypt"
       - "traefik.http.routers.pelias-iberian-peninsula-api.tls=true"
@@ -586,7 +586,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=net-sw-dev-proxy"
-      - "traefik.http.routers.pelias-scandinavia-api.rule=Host(`pelias-scandinavia-api.swayrider-dev.hevanto-it.com`)"
+      - "traefik.http.routers.pelias-scandinavia-api.rule=Host(`pelias-scandinavia-api.${DEV_DOMAIN}`)"
       - "traefik.http.routers.pelias-scandinavia-api.entrypoints=websecure"
       - "traefik.http.routers.pelias-scandinavia-api.tls.certresolver=letsencrypt"
       - "traefik.http.routers.pelias-scandinavia-api.tls=true"
@@ -610,7 +610,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=net-sw-dev-proxy"
-      - "traefik.http.routers.pelias-south-eastern-europe-api.rule=Host(`pelias-south-eastern-europe-api.swayrider-dev.hevanto-it.com`)"
+      - "traefik.http.routers.pelias-south-eastern-europe-api.rule=Host(`pelias-south-eastern-europe-api.${DEV_DOMAIN}`)"
       - "traefik.http.routers.pelias-south-eastern-europe-api.entrypoints=websecure"
       - "traefik.http.routers.pelias-south-eastern-europe-api.tls.certresolver=letsencrypt"
       - "traefik.http.routers.pelias-south-eastern-europe-api.tls=true"
@@ -634,7 +634,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=net-sw-dev-proxy"
-      - "traefik.http.routers.pelias-south-europe-api.rule=Host(`pelias-south-europe-api.swayrider-dev.hevanto-it.com`)"
+      - "traefik.http.routers.pelias-south-europe-api.rule=Host(`pelias-south-europe-api.${DEV_DOMAIN}`)"
       - "traefik.http.routers.pelias-south-europe-api.entrypoints=websecure"
       - "traefik.http.routers.pelias-south-europe-api.tls.certresolver=letsencrypt"
       - "traefik.http.routers.pelias-south-europe-api.tls=true"
@@ -658,7 +658,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=net-sw-dev-proxy"
-      - "traefik.http.routers.pelias-uk-iceland-api.rule=Host(`pelias-uk-iceland-api.swayrider-dev.hevanto-it.com`)"
+      - "traefik.http.routers.pelias-uk-iceland-api.rule=Host(`pelias-uk-iceland-api.${DEV_DOMAIN}`)"
       - "traefik.http.routers.pelias-uk-iceland-api.entrypoints=websecure"
       - "traefik.http.routers.pelias-uk-iceland-api.tls.certresolver=letsencrypt"
       - "traefik.http.routers.pelias-uk-iceland-api.tls=true"
@@ -682,7 +682,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=net-sw-dev-proxy"
-      - "traefik.http.routers.pelias-west-europe-api.rule=Host(`pelias-west-europe-api.swayrider-dev.hevanto-it.com`)"
+      - "traefik.http.routers.pelias-west-europe-api.rule=Host(`pelias-west-europe-api.${DEV_DOMAIN}`)"
       - "traefik.http.routers.pelias-west-europe-api.entrypoints=websecure"
       - "traefik.http.routers.pelias-west-europe-api.tls.certresolver=letsencrypt"
       - "traefik.http.routers.pelias-west-europe-api.tls=true"

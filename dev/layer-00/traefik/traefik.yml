@@ -23,7 +23,7 @@ accessLog: {}
 certificatesResolvers:
   letsencrypt:
     acme:
-      email: maarten@hevanto.be
+      email: ${TRAEFIK_ACME_EMAIL}
       storage: /letsencrypt/acme.json
       httpChallenge:
         entryPoint: web
