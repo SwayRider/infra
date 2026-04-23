@@ -63,7 +63,7 @@ Endpoints are configured through environment variables:
 
 Docker Compose configuration is layered under `infra/dev/`:
 
-* **layer-00**: base services (Traefik, PostgreSQL, Minio, Elasticsearch)
+* **layer-00**: base services (Traefik, PostgreSQL, Elasticsearch)
 * **layer-10**: geospatial services (Valhalla, Pelias)
 * **layer-20**: SwayRider services
 

@@ -15,7 +15,7 @@ Backend Services (Go)
 └── Shared Libraries (swlib)
 
 Infrastructure (Docker Compose)
-├── Layer 00: Base (Traefik, Minio, Elasticsearch, PostgreSQL)
+├── Layer 00: Base (Traefik, Elasticsearch, PostgreSQL)
 ├── Layer 10: Geospatial (Valhalla routing, Pelias geocoding)
 └── Layer 20: SwayRider internal services
 
@@ -36,7 +36,7 @@ Centralized authentication and authorization service featuring:
 Email delivery system with:
 - Template-based email sending
 - SMTP integration
-- Template storage via Minio
+- Template storage (database-backed)
 
 ### RegionService
 Geographic region management providing:
@@ -57,7 +57,7 @@ Multi-modal route planning supporting:
 | Layer | Technologies |
 |-------|-------------|
 | Backend | Go, gRPC, gRPC-Gateway, Protocol Buffers, PostgreSQL, sqlc |
-| Infrastructure | Docker, Traefik, Minio, Elasticsearch, Valhalla, Pelias |
+| Infrastructure | Docker, Traefik, Elasticsearch, Valhalla, Pelias |
 | Data Pipeline | Python, GeoPandas, Shapely, Osmium |
 
 ## Project Structure
