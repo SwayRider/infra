@@ -1,6 +1,8 @@
 entryPoints:
   web:
     address: ":80"
+  websecure:
+    address: ":443"
   traefik:
     address: ":8080"
 
@@ -17,3 +19,11 @@ log:
   level: DEBUG
 
 accessLog: {}
+
+certificatesResolvers:
+  letsencrypt:
+    acme:
+      email: ${TRAEFIK_ACME_EMAIL}
+      storage: /letsencrypt/acme.json
+      httpChallenge:
+        entryPoint: web
