@@ -1,0 +1,199 @@
+networks:
+  net-sw-dev-data:
+    external: true
+
+  net-sw-dev-valhalla:
+    name: net-sw-dev-valhalla
+    driver: bridge
+    attachable: true
+    ipam:
+      driver: default
+      config:
+        - subnet: 10.10.10.0/24
+
+  net-sw-dev-pelias:
+    name: net-sw-dev-pelias
+    driver: bridge
+    attachable: true
+    ipam:
+      driver: default
+      config:
+        - subnet: 10.10.11.0/24
+
+services:
+  valhalla-benelux:
+    image: ghcr.io/nilsnolde/docker-valhalla/valhalla:latest
+    container_name: sw-dev-valhalla-benelux
+    restart: unless-stopped
+    environment:
+      - "use_tiles_ignore_pbf=True"
+      - "force_rebuild=False"
+      - "server_threads=${VALHALLA_SERVER_THREADS}"
+    ports:
+      - "33001:8002"
+    volumes:
+      - '${GEODATA_PATH}:/geodata'
+      - '${VALHALLA_DATA_PATH}/benelux:/custom_files'
+      - './valhalla/benelux/valhalla.json:/custom_files/valhalla.json:ro'
+    networks:
+      - net-sw-dev-valhalla
+    ulimits:
+      nofile:
+        soft: 65535
+        hard: 65535
+
+  valhalla-france:
+    image: ghcr.io/nilsnolde/docker-valhalla/valhalla:latest
+    container_name: sw-dev-valhalla-france
+    restart: unless-stopped
+    environment:
+      - "use_tiles_ignore_pbf=True"
+      - "force_rebuild=False"
+      - "server_threads=${VALHALLA_SERVER_THREADS}"
+    ports:
+      - "33002:8002"
+    volumes:
+      - '${GEODATA_PATH}:/geodata'
+      - '${VALHALLA_DATA_PATH}/franche:/custom_files'
+      - './valhalla/france/valhalla.json:/custom_files/valhalla.json:ro'
+    networks:
+      - net-sw-dev-valhalla
+    ulimits:
+      nofile:
+        soft: 65535
+        hard: 65535
+
+  valhalla-germany:
+    image: ghcr.io/nilsnolde/docker-valhalla/valhalla:latest
+    container_name: sw-dev-valhalla-germany
+    restart: unless-stopped
+    environment:
+      - "use_tiles_ignore_pbf=True"
+      - "force_rebuild=False"
+      - "server_threads=${VALHALLA_SERVER_THREADS}"
+    ports:
+      - "33003:8002"
+    volumes:
+      - '${GEODATA_PATH}:/geodata'
+      - '${VALHALLA_DATA_PATH}/germany:/custom_files'
+      - './valhalla/germany/valhalla.json:/custom_files/valhalla.json:ro'
+    networks:
+      - net-sw-dev-valhalla
+    ulimits:
+      nofile:
+        soft: 65535
+        hard: 65535
+
+  pelias-placeholder:
+    image: pelias/placeholder:latest
+    container_name: sw-dev-pelias-placeholder
+    restart: unless-stopped
+    environment:
+      - "PLACEHOLDER_DATA=/data"
+    ports:
+      - "33100:3000"
+    volumes:
+      - '${GEODATA_PATH}:/geodata'
+      - "${PELIAS_DATA_PATH}/placeholder/data:/data"
+    networks:
+      - net-sw-dev-pelias
+
+  pelias-libpostal:
+    image: pelias/libpostal-service:latest
+    container_name: sw-dev-pelias-libpostal
+    restart: unless-stopped
+    ports:
+      - "33101:4400"
+    networks:
+      - net-sw-dev-pelias
+
+  pelias-benelux-pip:
+    image: pelias/pip-service:latest
+    container_name: sw-dev-pelias-benelux-pip
+    restart: unless-stopped
+    environment:
+      - "PELIAS_CONFIG=/etc/config/pelias.json"
+    ports:
+      - "33110:3102"
+    volumes:
+      - '${GEODATA_PATH}:/geodata'
+      - "${PELIAS_DATA_PATH}/benelux/pip/whosonfirst:/data/whosonfirst"
+      - "${PELIAS_DATA_PATH}/benelux/pip/config:/etc/config:ro"
+    networks:
+      - net-sw-dev-pelias
+
+  pelias-france-pip:
+    image: pelias/pip-service:latest
+    container_name: sw-dev-pelias-france-pip
+    restart: unless-stopped
+    environment:
+      - "PELIAS_CONFIG=/etc/config/pelias.json"
+    ports:
+      - "33120:3102"
+    volumes:
+      - '${GEODATA_PATH}:/geodata'
+      - "${PELIAS_DATA_PATH}/france/pip/whosonfirst:/data/whosonfirst"
+      - "${PELIAS_DATA_PATH}/france/pip/config:/etc/config:ro"
+    networks:
+      - net-sw-dev-pelias
+
+  pelias-germany-pip:
+    image: pelias/pip-service:latest
+    container_name: sw-dev-germany-pip
+    restart: unless-stopped
+    environment:
+      - "PELIAS_CONFIG=/etc/config/pelias.json"
+    ports:
+      - "33130:3102"
+    volumes:
+      - '${GEODATA_PATH}:/geodata'
+      - "${PELIAS_DATA_PATH}/germany/pip/whosonfirst:/data/whosonfirst"
+      - "${PELIAS_DATA_PATH}/germany/pip/config:/etc/config:ro"
+    networks:
+      - net-sw-dev-pelias
+
+  pelias-benelux-api:
+    image: pelias/api:latest
+    container_name: sw-dev-pelias-benelux-api
+    restart: unless-stopped
+    environment:
+      - "PELIAS_CONFIG=/etc/config/pelias.json"
+    ports:
+      - "33111:3100"
+    volumes:
+      - '${GEODATA_PATH}:/geodata'
+      - "${PELIAS_DATA_PATH}/benelux/api/config:/etc/config:ro"
+    networks:
+      - net-sw-dev-pelias
+      - net-sw-dev-data
+
+  pelias-france-api:
+    image: pelias/api:latest
+    container_name: sw-dev-pelias-france-api
+    restart: unless-stopped
+    environment:
+      - "PELIAS_CONFIG=/etc/config/pelias.json"
+    ports:
+      - "33121:3100"
+    volumes:
+      - '${GEODATA_PATH}:/geodata'
+      - "${PELIAS_DATA_PATH}/france/api/config:/etc/config:ro"
+    networks:
+      - net-sw-dev-pelias
+      - net-sw-dev-data
+
+  pelias-germany-api:
+    image: pelias/api:latest
+    container_name: sw-dev-pelias-germany-api
+    restart: unless-stopped
+    environment:
+      - "PELIAS_CONFIG=/etc/config/pelias.json"
+    ports:
+      - "33131:3100"
+    volumes:
+      - '${GEODATA_PATH}:/geodata'
+      - "${PELIAS_DATA_PATH}/germany/api/config:/etc/config:ro"
+    networks:
+      - net-sw-dev-pelias
+      - net-sw-dev-data
+
