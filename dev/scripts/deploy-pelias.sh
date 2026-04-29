@@ -35,7 +35,6 @@ CLEAN_ES=false
 CLEAN_ES_UNUSED=false
 SKIP_ES=false
 SKIP_ES_EXTRACT=false
-_SUDO_PASS=""
 
 source_env_files
 
@@ -47,20 +46,10 @@ while [[ $# -gt 0 ]]; do
         --clean-es-unused) CLEAN_ES_UNUSED=true; shift ;;
         --skip-es)         SKIP_ES=true; shift ;;
         --skip-es-extract) SKIP_ES_EXTRACT=true; shift ;;
-        --password)        _SUDO_PASS="$2"; shift 2 ;;
         *)                 _PARSED_ARGS+=("$1"); shift ;;
     esac
 done
 set -- "${_PARSED_ARGS[@]}"
-
-# Sudo helper: uses stored password if available
-sudo_cmd() {
-    if [[ -n "$_SUDO_PASS" ]]; then
-        echo "$_SUDO_PASS" | sudo -S "$@" 2>/dev/null
-    else
-        sudo "$@"
-    fi
-}
 
 parse_common_args "$@"
 
@@ -81,17 +70,17 @@ fi
 ES_URL="http://${ES_HOST}:${ES_PORT}"
 
 # Prompt for sudo password if needed and not provided
-if [[ (-n "$ES_SNAPSHOT_ARCHIVE" || $CLEAN_ES) && -z "$_SUDO_PASS" && ! $SKIP_ES ]]; then
+if [[ (-n "$ES_SNAPSHOT_ARCHIVE" || $CLEAN_ES) && -z "$SUDO_PASS" && ! $SKIP_ES ]]; then
     echo -n "Sudo password (needed for snapshot ownership): "
-    read -s _SUDO_PASS
+    read -s SUDO_PASS
     echo ""
 fi
 
 # Temp directory for pelias data (extracted under target disk, cleaned up on exit)
 _DATA_TMP_DIR=""
 _cleanup() {
-    _SUDO_PASS=""
-    [[ -n "$_DATA_TMP_DIR" && -d "$_DATA_TMP_DIR" ]] && rm -rf "$_DATA_TMP_DIR"
+    [[ -n "$_DATA_TMP_DIR" && -d "$_DATA_TMP_DIR" ]] && sudo_cmd rm -rf "$_DATA_TMP_DIR"
+    SUDO_PASS=""
 }
 trap _cleanup EXIT
 
@@ -311,8 +300,9 @@ deploy_data() {
     fi
 
     echo "  Extracting data archive..."
-    mkdir -p "$PELIAS_DATA_PATH"
-    _DATA_TMP_DIR=$(mktemp -d -p "$PELIAS_DATA_PATH" .tmp-pelias-XXXXXX)
+    sudo_cmd mkdir -p "$PELIAS_DATA_PATH"
+    _DATA_TMP_DIR=$(sudo_cmd mktemp -d -p "$PELIAS_DATA_PATH" .tmp-pelias-XXXXXX)
+    sudo_cmd chown "$(id -u):$(id -g)" "$_DATA_TMP_DIR"
 
     tar -xjf "$archive" -C "$_DATA_TMP_DIR"
     log_step "Extracted to $_DATA_TMP_DIR"
@@ -341,8 +331,8 @@ deploy_data() {
         API_CONFIG_DIR="${PELIAS_DATA_PATH}/${region}/api/config"
         PROD_CONFIG_SRC="$_DATA_TMP_DIR/${region}/pelias.json"
         if [[ -f "$PROD_CONFIG_SRC" ]]; then
-            mkdir -p "$API_CONFIG_DIR"
-            cp "$PROD_CONFIG_SRC" "$API_CONFIG_DIR/pelias.json"
+            sudo_cmd mkdir -p "$API_CONFIG_DIR"
+            sudo_cmd cp "$PROD_CONFIG_SRC" "$API_CONFIG_DIR/pelias.json"
             log_step "  Deployed API config -> $API_CONFIG_DIR/pelias.json"
         else
             log_warn "Config not found: $PROD_CONFIG_SRC"
@@ -351,8 +341,8 @@ deploy_data() {
         # Deploy config to PIP config path
         PIP_CONFIG_DIR="${PELIAS_DATA_PATH}/${region}/pip/config"
         if [[ -f "$PROD_CONFIG_SRC" ]]; then
-            mkdir -p "$PIP_CONFIG_DIR"
-            cp "$PROD_CONFIG_SRC" "$PIP_CONFIG_DIR/pelias.json"
+            sudo_cmd mkdir -p "$PIP_CONFIG_DIR"
+            sudo_cmd cp "$PROD_CONFIG_SRC" "$PIP_CONFIG_DIR/pelias.json"
             log_step "  Deployed PIP config -> $PIP_CONFIG_DIR/pelias.json"
         fi
 
@@ -360,9 +350,9 @@ deploy_data() {
         PIP_WOF_DIR="${PELIAS_DATA_PATH}/${region}/pip/whosonfirst"
         WOF_ARCHIVE="$_DATA_TMP_DIR/${region}/wof.tar.gz"
         if [[ -f "$WOF_ARCHIVE" ]]; then
-            mkdir -p "$PIP_WOF_DIR"
+            sudo_cmd mkdir -p "$PIP_WOF_DIR"
             log_step "  Extracting WOF data -> $PIP_WOF_DIR"
-            tar -xzf "$WOF_ARCHIVE" -C "$PIP_WOF_DIR"
+            sudo_cmd tar -xzf "$WOF_ARCHIVE" -C "$PIP_WOF_DIR"
         else
             log_warn "WOF archive not found: $WOF_ARCHIVE"
         fi
@@ -375,8 +365,9 @@ deploy_data() {
     PLACEHOLDER_SRC="$_DATA_TMP_DIR/store.sqlite3.gz"
 
     if [[ -f "$PLACEHOLDER_SRC" ]]; then
-        mkdir -p "$PLACEHOLDER_DEST"
-        gunzip -c "$PLACEHOLDER_SRC" > "$PLACEHOLDER_DEST/store.sqlite3"
+        sudo_cmd mkdir -p "$PLACEHOLDER_DEST"
+        gunzip -c "$PLACEHOLDER_SRC" > "$_DATA_TMP_DIR/store.sqlite3"
+        sudo_cmd cp "$_DATA_TMP_DIR/store.sqlite3" "$PLACEHOLDER_DEST/store.sqlite3"
         log_step "  Deployed -> $PLACEHOLDER_DEST/store.sqlite3"
     else
         log_warn "Placeholder data not found in archive"

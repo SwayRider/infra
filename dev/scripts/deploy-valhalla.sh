@@ -41,7 +41,7 @@ else
     # Rename tiles.tar to valhalla_tiles.tar in each region directory
     for region_dir in "$VALHALLA_DATA_PATH"/*/; do
         if [[ -f "${region_dir}tiles.tar" ]]; then
-            mv "${region_dir}tiles.tar" "${region_dir}valhalla_tiles.tar"
+            sudo_cmd mv "${region_dir}tiles.tar" "${region_dir}valhalla_tiles.tar"
             log_step "Renamed tiles.tar -> valhalla_tiles.tar in $(basename "$region_dir")"
         fi
     done

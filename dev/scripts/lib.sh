@@ -89,15 +89,23 @@ detect_tag_from_manifest() {
 
 # --- Extraction ---
 
+sudo_cmd() {
+    if [[ -n "$SUDO_PASS" ]]; then
+        echo "$SUDO_PASS" | sudo -S "$@" 2>/dev/null
+    else
+        "$@"
+    fi
+}
+
 extract_tar() {
     local archive="$1"
     local dest="$2"
     echo "  Extracting $(basename "$archive") -> $dest"
-    mkdir -p "$dest"
+    sudo_cmd mkdir -p "$dest"
     if [[ "$archive" == *.bz2 ]]; then
-        tar -xjf "$archive" -C "$dest"
+        sudo_cmd tar -xjf "$archive" -C "$dest"
     else
-        tar -xf "$archive" -C "$dest"
+        sudo_cmd tar -xf "$archive" -C "$dest"
     fi
 }
 
@@ -172,6 +180,8 @@ parse_common_args() {
                 ES_SNAPSHOTS_PATH="$2"; shift 2 ;;
             --tiles-path)
                 TILES_DATA_PATH="$2"; shift 2 ;;
+            --password)
+                SUDO_PASS="$2"; shift 2 ;;
             --regions)
                 REGIONS_OVERRIDE="$2"; shift 2 ;;
             --dry-run)
@@ -196,6 +206,7 @@ parse_common_args() {
 
 # Defaults
 INPUT_DIR=""
+SUDO_PASS=""
 REGIONS_OVERRIDE=""
 DRY_RUN=false
 ES_HOST="${ES_HOST:-localhost}"

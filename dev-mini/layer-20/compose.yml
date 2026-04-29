@@ -19,7 +19,7 @@ networks:
 
 services:
   authservice:
-    image: ghcr.io/swayrider/authservice:latest
+    image: ghcr.io/swayrider/authservice:dev-latest
     container_name: sw-dev-authservice
     restart: unless-stopped
     environment:
@@ -42,12 +42,12 @@ services:
       - net-sw-dev-data
 
   mailservice:
-    image: ghcr.io/swayrider/mailservice:latest
+    image: ghcr.io/swayrider/mailservice:dev-latest
     container_name: sw-dev-mailservice
     restart: unless-stopped
     environment:
-      - "SMTP_HOST=mail.hevanto-it.com"
-      - "SMTP_PORT=587"
+      - "SMTP_HOST=${MAIL_SMTP_HOST}"
+      - "SMTP_PORT=${MAIL_SMTP_PORT}"
       - "SMTP_USER=${MAIL_SMTP_USER}"
       - "SMTP_PASSWORD=${MAIL_SMTP_PASSWORD}"
       - "AUTHSERVICE_HOST=authservice"
@@ -60,7 +60,7 @@ services:
       - net-sw-dev-data
 
   regionservice:
-    image: ghcr.io/swayrider/regionservice:latest
+    image: ghcr.io/swayrider/regionservice:dev-latest
     container_name: sw-dev-regionservice
     environment:
       - "GEODATA_DIR=/data/geodata"
@@ -74,7 +74,7 @@ services:
       - net-sw-dev-data
 
   routerservice:
-    image: ghcr.io/swayrider/routerservice:latest
+    image: ghcr.io/swayrider/routerservice:dev-latest
     container_name: sw-dev-routerservice
     environment:
       - "PELIAS_PREFIX=pelias-"
@@ -93,7 +93,7 @@ services:
       - net-sw-dev-pelias
 
   searchservice:
-    image: ghcr.io/swayrider/searchservice:latest
+    image: ghcr.io/swayrider/searchservice:dev-latest
     container_name: sw-dev-searchservice
     restart: unless-stopped
     environment:
@@ -103,14 +103,14 @@ services:
       - "AUTHSERVICE_HOST=authservice"
       - "AUTHSERVICE_PORT=8081"
     ports:
-      - "34006:8080"
-      - "34106:8081"
+      - "34007:8080"
+      - "34107:8081"
     networks:
       - net-sw-dev-sw-internal
       - net-sw-dev-pelias
 
   tilesservice:
-    image: ghcr.io/swayrider/tilesservice:latest
+    image: ghcr.io/swayrider/tilesservice:dev-latest
     container_name: sw-dev-tilesservice
     restart: unless-stopped
     environment:

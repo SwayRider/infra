@@ -54,7 +54,7 @@ services:
       - "33002:8002"
     volumes:
       - '${GEODATA_PATH}:/geodata'
-      - '${VALHALLA_DATA_PATH}/franche:/custom_files'
+      - '${VALHALLA_DATA_PATH}/france:/custom_files'
       - './valhalla/france/valhalla.json:/custom_files/valhalla.json:ro'
     networks:
       - net-sw-dev-valhalla
