@@ -49,6 +49,11 @@ services:
       - "./traefik/letsencrypt:/letsencrypt"
     networks:
       - net-sw-dev-proxy
+    deploy:
+      resources:
+        limits:
+          cpus: '${TRAEFIK_CPU_LIMIT:-0.5}'
+          memory: ${TRAEFIK_MEM_LIMIT:-256m}
 
   # Elastic search
   prepare-elasticsearch:
@@ -68,7 +73,7 @@ services:
       - prepare-elasticsearch
     environment:
       - "discovery.type=single-node"
-      - "ES_JAVA_OPTS=-Xms4g -Xmx4g"
+      - "ES_JAVA_OPTS=${ES_JAVA_OPTS:--Xms4g -Xmx4g}"
       - "xpack.security.enabled=false"
       - "xpack.license.self_generated.type=basic"
       - "path.repo=/usr/share/elasticsearch/snapshots"
@@ -82,6 +87,11 @@ services:
       - "${ES_SNAPSHOTS_PATH}:/usr/share/elasticsearch/snapshots"
     networks:
       - net-sw-dev-data
+    deploy:
+      resources:
+        limits:
+          cpus: '${ES_CPU_LIMIT:-2}'
+          memory: ${ES_MEM_LIMIT:-5g}
 
   # WireGuard VPN
   wireguard:
@@ -97,8 +107,8 @@ services:
     volumes:
       - "./wireguard:/etc/wireguard"
     ports:
-      - "51820:51820/udp"
-      - "51821:51821/tcp"
+      - "${WG_UDP_PORT:-51820}:51820/udp"
+      - "${WG_TCP_PORT:-51821}:51821/tcp"
     cap_add:
       - NET_ADMIN
       - SYS_MODULE
@@ -107,6 +117,11 @@ services:
       - net.ipv4.conf.all.src_valid_mark=1
     networks:
       - net-sw-dev-proxy
+    deploy:
+      resources:
+        limits:
+          cpus: '${WG_CPU_LIMIT:-0.25}'
+          memory: ${WG_MEM_LIMIT:-128m}
 
   # Postgres
   postgres:
@@ -123,3 +138,8 @@ services:
       - "${POSTGRES_DATA_PATH}:/var/lib/postgresql"
     networks:
       - net-sw-dev-data
+    deploy:
+      resources:
+        limits:
+          cpus: '${POSTGRES_CPU_LIMIT:-1}'
+          memory: ${POSTGRES_MEM_LIMIT:-1g}

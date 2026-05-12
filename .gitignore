@@ -8,3 +8,5 @@ dev/pg-certs/*
 
 dev-nomad
 dev-old
+
+.env
