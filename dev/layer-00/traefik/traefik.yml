@@ -17,3 +17,9 @@ log:
   level: DEBUG
 
 accessLog: {}
+
+serversTransport:
+  respondingTimeouts:
+    readTimeout: 0     # disabled — SSE keeps the connection open indefinitely
+    writeTimeout: 0
+    idleTimeout: 600s
