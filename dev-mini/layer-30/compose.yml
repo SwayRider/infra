@@ -1,0 +1,60 @@
+networks:
+  net-sw-dev-proxy:
+    external: true
+
+  net-sw-dev-data:
+    external: true
+
+  net-sw-dev-sw-internal:
+    external: true
+
+services:
+  swayrider-api:
+    image: ghcr.io/swayrider/swayrider-api:dev-latest
+    container_name: sw-dev-swayrider-api
+    restart: unless-stopped
+    environment:
+      - "LOG_LEVEL=info"
+      - "AUTHSERVICE_HOST=authservice"
+      - "AUTHSERVICE_PORT=8081"
+      - "ROUTERSERVICE_HOST=routerservice"
+      - "ROUTERSERVICE_PORT=8081"
+      - "SEARCHSERVICE_HOST=searchservice"
+      - "SEARCHSERVICE_PORT=8081"
+      - "REGIONSERVICE_HOST=regionservice"
+      - "REGIONSERVICE_PORT=8081"
+      - "TILESSERVICE_HOST=tilesservice"
+      - "TILESSERVICE_PORT=8080"
+      - "REDIS_HOST=redis"
+      - "REDIS_PORT=6379"
+      - "SWAYRIDER_API_CLIENT_ID=${SWAYRIDER_API_CLIENT_ID}"
+      - "SWAYRIDER_API_CLIENT_SECRET=${SWAYRIDER_API_CLIENT_SECRET}"
+      - "CORS_ALLOWED_ORIGINS=${CORS_ALLOWED_ORIGINS:-http://localhost:5173}"
+      - "ROUTE_WORKER_COUNT=${ROUTE_WORKER_COUNT:-5}"
+      - "SEARCH_WORKER_COUNT=${SEARCH_WORKER_COUNT:-10}"
+      - "QUEUE_MAX_DEPTH=${QUEUE_MAX_DEPTH:-500}"
+      - "RESULT_TTL_SECONDS=${RESULT_TTL_SECONDS:-300}"
+      - "RATE_LIMIT_IP_AUTH=${RATE_LIMIT_IP_AUTH:-10}"
+      - "RATE_LIMIT_IP_PUBLIC=${RATE_LIMIT_IP_PUBLIC:-600}"
+      - "RATE_LIMIT_USER_API=${RATE_LIMIT_USER_API:-300}"
+      - "RATE_LIMIT_USER_EXPENSIVE=${RATE_LIMIT_USER_EXPENSIVE:-20}"
+    ports:
+      - "34000:8080"    # dev access (direct, bypasses Traefik)
+    networks:
+      - net-sw-dev-proxy          # Traefik discovery
+      - net-sw-dev-sw-internal    # reach backend services
+      - net-sw-dev-data           # reach Redis
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.swayrider-api.rule=Host(`api.${DEV_DOMAIN}`)"
+      - "traefik.http.routers.swayrider-api.entrypoints=web"
+      - "traefik.http.services.swayrider-api.loadbalancer.server.port=8080"
+      - "traefik.http.routers.swayrider-api-secure.rule=Host(`api.${DEV_DOMAIN}`)"
+      - "traefik.http.routers.swayrider-api-secure.entrypoints=websecure"
+      - "traefik.http.routers.swayrider-api-secure.tls=true"
+      - "traefik.http.routers.swayrider-api-secure.tls.certresolver=letsencrypt"
+    deploy:
+      resources:
+        limits:
+          cpus: '${SWAYRIDER_API_CPU_LIMIT:-1}'
+          memory: ${SWAYRIDER_API_MEM_LIMIT:-512m}

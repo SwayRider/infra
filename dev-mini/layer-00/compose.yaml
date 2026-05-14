@@ -123,6 +123,32 @@ services:
           cpus: '${WG_CPU_LIMIT:-0.25}'
           memory: ${WG_MEM_LIMIT:-128m}
 
+  # Redis
+  redis:
+    image: redis:7-alpine
+    container_name: sw-dev-redis
+    restart: unless-stopped
+    command: >
+      redis-server
+      --maxmemory 256mb
+      --maxmemory-policy allkeys-lru
+      --save ""
+      --appendonly no
+    ports:
+      - "36379:6379"
+    networks:
+      - net-sw-dev-data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: '${REDIS_CPU_LIMIT:-0.5}'
+          memory: ${REDIS_MEM_LIMIT:-384m}
+
   # Postgres
   postgres:
     image: postgres:18
