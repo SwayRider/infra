@@ -1,3 +1,8 @@
+volumes:
+  sw-api-credentials:
+    external: true
+    name: sw-dev-api-credentials
+
 networks:
   net-sw-dev-proxy:
     external: true
@@ -13,6 +18,8 @@ services:
     image: ghcr.io/swayrider/swayrider-api:dev-latest
     container_name: sw-dev-swayrider-api
     restart: unless-stopped
+    volumes:
+      - sw-api-credentials:/credentials:ro
     environment:
       - "LOG_LEVEL=info"
       - "AUTHSERVICE_HOST=authservice"
@@ -27,8 +34,6 @@ services:
       - "TILESSERVICE_PORT=8080"
       - "REDIS_HOST=redis"
       - "REDIS_PORT=6379"
-      - "SWAYRIDER_API_CLIENT_ID=${SWAYRIDER_API_CLIENT_ID}"
-      - "SWAYRIDER_API_CLIENT_SECRET=${SWAYRIDER_API_CLIENT_SECRET}"
       - "CORS_ALLOWED_ORIGINS=${CORS_ALLOWED_ORIGINS:-http://localhost:5173}"
       - "ROUTE_WORKER_COUNT=${ROUTE_WORKER_COUNT:-5}"
       - "SEARCH_WORKER_COUNT=${SEARCH_WORKER_COUNT:-10}"

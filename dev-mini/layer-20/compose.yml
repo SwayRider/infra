@@ -1,3 +1,7 @@
+volumes:
+  sw-api-credentials:
+    name: sw-dev-api-credentials
+
 networks:
   net-sw-dev-data:
     external: true
@@ -108,6 +112,29 @@ services:
     networks:
       - net-sw-dev-sw-internal
       - net-sw-dev-pelias
+
+  swayrider-api-register:
+    image: ghcr.io/swayrider/swctl:dev-latest
+    container_name: sw-dev-swayrider-api-register
+    restart: no
+    depends_on:
+      authservice:
+        condition: service_started
+    environment:
+      - "AUTH_HOST=authservice"
+      - "AUTH_PORT=8081"
+      - "AUTH_USER=${AUTH_ADMIN_EMAIL}"
+      - "AUTH_PASSWORD=${AUTH_ADMIN_PASSWORD}"
+    volumes:
+      - sw-api-credentials:/credentials
+    command: >
+      auth ensure-service-client
+      --output /credentials/swayrider-api.env
+      --retries 15
+      swayrider-api
+      routing:execute search:execute
+    networks:
+      - net-sw-dev-sw-internal
 
   tilesservice:
     image: ghcr.io/swayrider/tilesservice:dev-latest
