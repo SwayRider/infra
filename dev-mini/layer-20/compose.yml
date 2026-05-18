@@ -92,6 +92,8 @@ services:
       - "VALHALLA_PORT=8002"
       - "REGIONSERVICE_HOST=regionservice"
       - "REGIONSERVICE_PORT=8081"
+      - "AUTHSERVICE_HOST=authservice"
+      - "AUTHSERVICE_PORT=8081"
     ports:
       - "34004:8080"
       - "34104:8081"
