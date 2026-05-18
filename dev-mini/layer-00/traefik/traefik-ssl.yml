@@ -20,6 +20,12 @@ log:
 
 accessLog: {}
 
+serversTransport:
+  respondingTimeouts:
+    readTimeout: 0     # disabled — SSE keeps the connection open indefinitely
+    writeTimeout: 0
+    idleTimeout: 600s
+
 certificatesResolvers:
   letsencrypt:
     acme:

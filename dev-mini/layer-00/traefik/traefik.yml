@@ -1,6 +1,11 @@
 entryPoints:
   web:
     address: ":80"
+    transport:
+      respondingTimeouts:
+        readTimeout: 0
+        writeTimeout: 0
+        idleTimeout: 600s
   traefik:
     address: ":8080"
 
@@ -17,3 +22,7 @@ log:
   level: DEBUG
 
 accessLog: {}
+
+serversTransport:
+  forwardingTimeouts:
+    responseHeaderTimeout: 0
