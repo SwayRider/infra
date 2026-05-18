@@ -15,8 +15,8 @@ networks:
 
 services:
   swayrider-api:
-    #image: ghcr.io/swayrider/swayrider-api:dev-latest
-    image: ghcr.io/swayrider/swayrider-api:v0.0.0-feat-plan-07-entrypoint
+    image: ghcr.io/swayrider/swayrider-api:dev-latest
+    #image: ghcr.io/swayrider/swayrider-api:v0.0.0-feat-plan-07-entrypoint
     container_name: sw-dev-swayrider-api
     restart: unless-stopped
     volumes:

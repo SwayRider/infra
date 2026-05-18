@@ -23,8 +23,8 @@ networks:
 
 services:
   authservice:
-    #image: ghcr.io/swayrider/authservice:dev-latest
-    image: ghcr.io/swayrider/authservice:v0.1.1-feat-swayrider-api
+    image: ghcr.io/swayrider/authservice:dev-latest
+    #image: ghcr.io/swayrider/authservice:v0.1.1-feat-swayrider-api
     container_name: sw-dev-authservice
     restart: unless-stopped
     environment:
@@ -47,8 +47,8 @@ services:
       - net-sw-dev-data
 
   mailservice:
-    #image: ghcr.io/swayrider/mailservice:dev-latest
-    image: ghcr.io/swayrider/mailservice:v0.1.0-feat-swayrider-api
+    image: ghcr.io/swayrider/mailservice:dev-latest
+    #image: ghcr.io/swayrider/mailservice:v0.1.0-feat-swayrider-api
     container_name: sw-dev-mailservice
     restart: unless-stopped
     environment:
@@ -66,8 +66,8 @@ services:
       - net-sw-dev-data
 
   regionservice:
-    #image: ghcr.io/swayrider/regionservice:dev-latest
-    image: ghcr.io/swayrider/regionservice:v0.1.0-feat-swayrider-api
+    image: ghcr.io/swayrider/regionservice:dev-latest
+    #image: ghcr.io/swayrider/regionservice:v0.1.0-feat-swayrider-api
     container_name: sw-dev-regionservice
     environment:
       - "GEODATA_DIR=/data/geodata"
@@ -81,8 +81,8 @@ services:
       - net-sw-dev-data
 
   routerservice:
-    #image: ghcr.io/swayrider/routerservice:dev-latest
-    image: ghcr.io/swayrider/routerservice:v0.1.0-feat-swayrider-api
+    image: ghcr.io/swayrider/routerservice:dev-latest
+    #image: ghcr.io/swayrider/routerservice:v0.1.0-feat-swayrider-api
     container_name: sw-dev-routerservice
     environment:
       - "PELIAS_PREFIX=pelias-"
@@ -103,8 +103,8 @@ services:
       - net-sw-dev-pelias
 
   searchservice:
-    #image: ghcr.io/swayrider/searchservice:dev-latest
-    image: ghcr.io/swayrider/searchservice:v0.1.0-feat-swayrider-api
+    image: ghcr.io/swayrider/searchservice:dev-latest
+    #image: ghcr.io/swayrider/searchservice:v0.1.0-feat-swayrider-api
     container_name: sw-dev-searchservice
     restart: unless-stopped
     environment:
@@ -121,8 +121,8 @@ services:
       - net-sw-dev-pelias
 
   swayrider-api-register:
-    #image: ghcr.io/swayrider/swctl:dev-latest
-    image: ghcr.io/swayrider/swctl:v0.1.1-feat-plan-07-ensure-client
+    image: ghcr.io/swayrider/swctl:dev-latest
+    #image: ghcr.io/swayrider/swctl:v0.1.1-feat-plan-07-ensure-client
     container_name: sw-dev-swayrider-api-register
     restart: no
     depends_on:
@@ -145,8 +145,8 @@ services:
       - net-sw-dev-sw-internal
 
   tilesservice:
-    #image: ghcr.io/swayrider/tilesservice:dev-latest
-    image: ghcr.io/swayrider/tilesservice:v0.1.0-feat-swayrider-api
+    image: ghcr.io/swayrider/tilesservice:dev-latest
+    #image: ghcr.io/swayrider/tilesservice:v0.1.0-feat-swayrider-api
     container_name: sw-dev-tilesservice
     restart: unless-stopped
     environment:
