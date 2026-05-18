@@ -1,6 +1,11 @@
 entryPoints:
   web:
     address: ":80"
+    transport:
+      respondingTimeouts:
+        readTimeout: 0
+        writeTimeout: 0
+        idleTimeout: 600s
   traefik:
     address: ":8080"
 
@@ -19,7 +24,5 @@ log:
 accessLog: {}
 
 serversTransport:
-  respondingTimeouts:
-    readTimeout: 0     # disabled — SSE keeps the connection open indefinitely
-    writeTimeout: 0
-    idleTimeout: 600s
+  forwardingTimeouts:
+    responseHeaderTimeout: 0
