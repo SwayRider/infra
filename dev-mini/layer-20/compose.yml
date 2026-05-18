@@ -122,7 +122,6 @@ services:
 
   swayrider-api-register:
     image: ghcr.io/swayrider/swctl:dev-latest
-    #image: ghcr.io/swayrider/swctl:v0.1.1-feat-plan-07-ensure-client
     container_name: sw-dev-swayrider-api-register
     restart: no
     depends_on:
@@ -133,14 +132,13 @@ services:
       - "AUTH_PORT=8081"
       - "AUTH_USER=${AUTH_ADMIN_EMAIL}"
       - "AUTH_PASSWORD=${AUTH_ADMIN_PASSWORD}"
+      - "REQUIRED_SCOPES=routing:execute search:execute"
+      - "FORCE_REREGISTER=${FORCE_REREGISTER:-false}"
     volumes:
       - sw-api-credentials:/credentials
-    command: >
-      auth ensure-service-client
-      --output /credentials/swayrider-api.env
-      --retries 15
-      swayrider-api
-      routing:execute search:execute
+      - ./swayrider-api-register/init.sh:/scripts/init.sh:ro
+    entrypoint: ["/bin/sh"]
+    command: /scripts/init.sh
     networks:
       - net-sw-dev-sw-internal
 
