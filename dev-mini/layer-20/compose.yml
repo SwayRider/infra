@@ -24,7 +24,7 @@ networks:
 services:
   authservice:
     image: ghcr.io/swayrider/authservice:dev-latest
-    #image: ghcr.io/swayrider/authservice:v0.1.1-feat-swayrider-api
+    #image: ghcr.io/swayrider/authservice:v0.1.1-chore-update-swlib
     container_name: sw-dev-authservice
     restart: unless-stopped
     environment:
@@ -48,9 +48,12 @@ services:
 
   mailservice:
     image: ghcr.io/swayrider/mailservice:dev-latest
-    #image: ghcr.io/swayrider/mailservice:v0.1.0-feat-swayrider-api
+    #image: ghcr.io/swayrider/mailservice:v0.1.1-chore-update-swlib
     container_name: sw-dev-mailservice
     restart: unless-stopped
+    depends_on:
+      authservice:
+        condition: service_started
     environment:
       - "SMTP_HOST=${MAIL_SMTP_HOST}"
       - "SMTP_PORT=${MAIL_SMTP_PORT}"
@@ -67,8 +70,12 @@ services:
 
   regionservice:
     image: ghcr.io/swayrider/regionservice:dev-latest
-    #image: ghcr.io/swayrider/regionservice:v0.1.0-feat-swayrider-api
+    #image: ghcr.io/swayrider/regionservice:v0.1.1-feat-region-endpoint-auth
     container_name: sw-dev-regionservice
+    restart: unless-stopped
+    depends_on:
+      authservice:
+        condition: service_started
     environment:
       - "GEODATA_DIR=/data/geodata"
     volumes:
@@ -82,8 +89,12 @@ services:
 
   routerservice:
     image: ghcr.io/swayrider/routerservice:dev-latest
-    #image: ghcr.io/swayrider/routerservice:v0.1.0-feat-swayrider-api
+    #image: ghcr.io/swayrider/routerservice:v0.1.1-feat-region-token-forwarding
     container_name: sw-dev-routerservice
+    restart: unless-stopped
+    depends_on:
+      authservice:
+        condition: service_started
     environment:
       - "PELIAS_PREFIX=pelias-"
       - "PELIAS_API_POSTFIX=-api"
@@ -104,9 +115,12 @@ services:
 
   searchservice:
     image: ghcr.io/swayrider/searchservice:dev-latest
-    #image: ghcr.io/swayrider/searchservice:v0.1.0-feat-swayrider-api
+    #image: ghcr.io/swayrider/searchservice:v0.1.1-feat-search-endpoint-auth-docs
     container_name: sw-dev-searchservice
     restart: unless-stopped
+    depends_on:
+      authservice:
+        condition: service_started
     environment:
       - "PELIAS_REGIONS=benelux=http://pelias-benelux-api:3100/v1,france=http://pelias-france-api:3100/v1,germany=http://pelias-germany-api:3100/v1"
       - "REGIONSERVICE_HOST=regionservice"
@@ -122,7 +136,7 @@ services:
 
   swayrider-api-register:
     image: ghcr.io/swayrider/swctl:dev-latest
-    #image: ghcr.io/swayrider/swctl:v0.1.1-feat-plan-07-ensure-client
+    #image: ghcr.io/swayrider/swctl:v0.1.2-feat-region-auth
     container_name: sw-dev-swayrider-api-register
     restart: no
     depends_on:
@@ -133,22 +147,24 @@ services:
       - "AUTH_PORT=8081"
       - "AUTH_USER=${AUTH_ADMIN_EMAIL}"
       - "AUTH_PASSWORD=${AUTH_ADMIN_PASSWORD}"
+      - "REQUIRED_SCOPES=region:query routing:execute search:execute tiles:serve"
+      - "FORCE_REREGISTER=${FORCE_REREGISTER:-false}"
     volumes:
       - sw-api-credentials:/credentials
-    command: >
-      auth ensure-service-client
-      --output /credentials/swayrider-api.env
-      --retries 15
-      swayrider-api
-      routing:execute search:execute
+      - ./swayrider-api-register/init.sh:/scripts/init.sh:ro
+    entrypoint: ["/bin/sh"]
+    command: /scripts/init.sh
     networks:
       - net-sw-dev-sw-internal
 
   tilesservice:
     image: ghcr.io/swayrider/tilesservice:dev-latest
-    #image: ghcr.io/swayrider/tilesservice:v0.1.0-feat-swayrider-api
+    #image: ghcr.io/swayrider/tilesservice:v0.1.1-feat-tile-endpoint-auth
     container_name: sw-dev-tilesservice
     restart: unless-stopped
+    depends_on:
+      authservice:
+        condition: service_started
     environment:
       - "TILES_PATH=/data/tiles"
       - "COMPRESSION_ENABLED=${TILESSERVICE_COMPRESSION_ENABLED}"
@@ -159,6 +175,8 @@ services:
       - "SERVICE_HOST=${TILESSERVICE_PUBLIC_HOST_NAME}"
       - "SERVICE_PORT=${TILESSERVICE_PUBLIC_PORT}"
       - "SERVICE_PREFIX=${TILESSERVICE_PUBLIC_PATH_PREFIX}"
+      - "AUTHSERVICE_HOST=authservice"
+      - "AUTHSERVICE_PORT=8081"
     volumes:
       - "${TILES_DATA_PATH}:/data/tiles:ro"
       - "${TILES_CACHE_PATH}:/data/cache"
