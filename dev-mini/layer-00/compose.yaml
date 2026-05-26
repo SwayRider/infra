@@ -32,12 +32,15 @@ services:
     restart: unless-stopped
     depends_on:
       - traefik-init
+    environment:
+      - TRAEFIK_ACME_EMAIL=${TRAEFIK_ACME_EMAIL}
     command:
       - "--providers.docker=true"
       - "--providers.docker.exposedbydefault=false"
       - "--providers.docker.network=net-sw-dev-proxy"
       - "--providers.file.directory=/etc/traefik/dynamic"
       - "--providers.file.watch=true"
+      - "--certificatesresolvers.letsencrypt.acme.email=${TRAEFIK_ACME_EMAIL}"
     ports:
       - "30080:80"
       - "30443:443"
@@ -100,14 +103,16 @@ services:
     restart: unless-stopped
     environment:
       - WG_HOST=${WG_HOST}
+      - WG_PORT=${WG_UDP_PORT:-51820}
       - WG_PASSWORD=${WG_PASSWORD}
       - WG_DEFAULT_DNS=1.1.1.1
       - WG_ALLOWED_IPS=10.8.0.0/24
     entrypoint: ["/bin/sh", "/etc/wireguard/entrypoint.sh"]
+    command: ["/usr/bin/dumb-init", "node", "server.js"]
     volumes:
       - "./wireguard:/etc/wireguard"
     ports:
-      - "${WG_UDP_PORT:-51820}:51820/udp"
+      - "${WG_UDP_PORT:-51820}:${WG_UDP_PORT:-51820}/udp"
       - "${WG_TCP_PORT:-51821}:51821/tcp"
     cap_add:
       - NET_ADMIN
@@ -117,6 +122,19 @@ services:
       - net.ipv4.conf.all.src_valid_mark=1
     networks:
       - net-sw-dev-proxy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.services.wireguard.loadbalancer.server.port=51821"
+      # HTTP
+      - "traefik.http.routers.wireguard.rule=Host(`vpn.${DEV_DOMAIN}`)"
+      - "traefik.http.routers.wireguard.entrypoints=web"
+      - "traefik.http.routers.wireguard.service=wireguard"
+      # HTTPS (active only when SSL_ENABLED and traefik-ssl.yml is used)
+      - "traefik.http.routers.wireguard-secure.rule=Host(`vpn.${DEV_DOMAIN}`)"
+      - "traefik.http.routers.wireguard-secure.entrypoints=websecure"
+      - "traefik.http.routers.wireguard-secure.tls=true"
+      - "traefik.http.routers.wireguard-secure.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.wireguard-secure.service=wireguard"
     deploy:
       resources:
         limits:
