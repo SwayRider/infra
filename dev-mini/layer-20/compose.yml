@@ -38,6 +38,7 @@ services:
       - "MAILER_ADDRESS=${AUTH_MAILER_ADDRESS}"
       - "MAILSERVICE_HOST=mailservice"
       - "MAILSERVICE_PORT=8081"
+      - "COOKIE_NAMESPACE=${COOKIE_NAMESPACE}"
     ports:
       - "34001:8080"
       - "34101:8081"
