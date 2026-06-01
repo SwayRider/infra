@@ -44,6 +44,7 @@ services:
       - "RATE_LIMIT_IP_PUBLIC=${RATE_LIMIT_IP_PUBLIC:-600}"
       - "RATE_LIMIT_USER_API=${RATE_LIMIT_USER_API:-300}"
       - "RATE_LIMIT_USER_EXPENSIVE=${RATE_LIMIT_USER_EXPENSIVE:-20}"
+      - "COOKIE_NAMESPACE=${COOKIE_NAMESPACE}"
     ports:
       - "34000:8080"    # dev access (direct, bypasses Traefik)
     networks:
