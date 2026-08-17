@@ -10,3 +10,5 @@ dev-nomad
 dev-old
 
 .env
+
+.DS_Store
