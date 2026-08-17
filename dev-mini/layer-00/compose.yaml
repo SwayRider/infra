@@ -51,7 +51,11 @@ services:
       - "./traefik/traefik_dynamic.yml:/etc/traefik/dynamic/dynamic.yml:ro"
       - "./traefik/letsencrypt:/letsencrypt"
     networks:
-      - net-sw-dev-proxy
+      net-sw-dev-proxy:
+        # Pinned so swayrider-api can whitelist exactly this IP in TRUSTED_PROXIES
+        # (the wireguard container shares this subnet, so the subnet itself is
+        # not trustworthy). Keep in sync with layer-30's TRUSTED_PROXIES.
+        ipv4_address: 10.10.0.2
     deploy:
       resources:
         limits:
