@@ -7,6 +7,10 @@ networks:
       driver: default
       config:
         - subnet: 10.10.0.0/24
+          # Dynamic (unpinned) containers only get addresses from this
+          # sub-range, keeping 10.10.0.2-15 free for static pins like
+          # traefik's 10.10.0.2 without racing another container for it.
+          ip_range: 10.10.0.16/28
 
   net-sw-dev-data:
     name: net-sw-dev-data
