@@ -78,8 +78,13 @@ services:
   regionservice:
     image: ghcr.io/swayrider/regionservice:latest
     container_name: sw-dev-regionservice
+    depends_on:
+      authservice:
+        condition: service_started
     environment:
       - "GEODATA_DIR=/data/geodata"
+      - "AUTHSERVICE_HOST=authservice"
+      - "AUTHSERVICE_PORT=8081"
     volumes:
       - "${GEODATA_PATH}:/data/geodata:ro"
     ports:
