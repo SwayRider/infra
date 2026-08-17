@@ -156,6 +156,10 @@ services:
     image: pelias/api:latest
     container_name: sw-dev-pelias-benelux-api
     restart: unless-stopped
+    depends_on:
+      - pelias-benelux-pip
+      - pelias-libpostal
+      - pelias-placeholder
     environment:
       - "PELIAS_CONFIG=/etc/config/pelias.json"
     ports:
@@ -171,6 +175,10 @@ services:
     image: pelias/api:latest
     container_name: sw-dev-pelias-france-api
     restart: unless-stopped
+    depends_on:
+      - pelias-france-pip
+      - pelias-libpostal
+      - pelias-placeholder
     environment:
       - "PELIAS_CONFIG=/etc/config/pelias.json"
     ports:
@@ -186,6 +194,10 @@ services:
     image: pelias/api:latest
     container_name: sw-dev-pelias-germany-api
     restart: unless-stopped
+    depends_on:
+      - pelias-germany-pip
+      - pelias-libpostal
+      - pelias-placeholder
     environment:
       - "PELIAS_CONFIG=/etc/config/pelias.json"
     ports:
