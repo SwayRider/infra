@@ -1,6 +1,15 @@
 entryPoints:
   web:
     address: ":80"
+    # HAProxy sends PROXY protocol v2 (send-proxy-v2) for the real client
+    # IP — https_in is mode tcp/SNI passthrough so it can't set
+    # X-Forwarded-For, hence PROXY protocol for both entrypoints.
+    # trustedIPs is net-sw-dev-proxy's gateway (confirmed via
+    # `docker network inspect net-sw-dev-proxy`), not HAProxy's real IP —
+    # that's the address Traefik sees as its TCP peer for host-mapped ports.
+    proxyProtocol:
+      trustedIPs:
+        - "10.10.0.16/32"
     transport:
       respondingTimeouts:
         readTimeout: 0
@@ -8,6 +17,9 @@ entryPoints:
         idleTimeout: 600s
   websecure:
     address: ":443"
+    proxyProtocol:
+      trustedIPs:
+        - "10.10.0.16/32"
     transport:
       respondingTimeouts:
         readTimeout: 0
