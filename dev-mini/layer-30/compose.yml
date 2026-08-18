@@ -15,8 +15,8 @@ networks:
 
 services:
   swayrider-api:
-    image: ghcr.io/swayrider/swayrider-api:dev-latest
-    #image: ghcr.io/swayrider/swayrider-api:v0.1.3
+    #image: ghcr.io/swayrider/swayrider-api:dev-latest
+    image: ghcr.io/swayrider/swayrider-api:v0.1.4-fix-dockerfile-hardening
     container_name: sw-dev-swayrider-api
     restart: unless-stopped
     volumes:

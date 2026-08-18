@@ -69,6 +69,9 @@ services:
       - "MAIL_ALLOWED_FROM_DOMAINS=${MAIL_ALLOWED_FROM_DOMAINS:-}"
       - "AUTHSERVICE_HOST=authservice"
       - "AUTHSERVICE_PORT=8081"
+      - "RATE_LIMIT_RPS=${RATE_LIMIT_RPS:-50}"
+      - "RATE_LIMIT_BURST=${RATE_LIMIT_BURST:-100}"
+      - "RATE_LIMIT_IDLE_TTL_SECS=${RATE_LIMIT_IDLE_TTL_SECS:-300}"
     ports:
       - "34002:8080"
       - "34102:8081"
@@ -86,6 +89,9 @@ services:
       - "GEODATA_DIR=/data/geodata"
       - "AUTHSERVICE_HOST=authservice"
       - "AUTHSERVICE_PORT=8081"
+      - "RATE_LIMIT_RPS=${RATE_LIMIT_RPS:-50}"
+      - "RATE_LIMIT_BURST=${RATE_LIMIT_BURST:-100}"
+      - "RATE_LIMIT_IDLE_TTL_SECS=${RATE_LIMIT_IDLE_TTL_SECS:-300}"
     volumes:
       - "${GEODATA_PATH}:/data/geodata:ro"
     ports:
@@ -106,6 +112,9 @@ services:
       - "VALHALLA_PORT=8002"
       - "REGIONSERVICE_HOST=regionservice"
       - "REGIONSERVICE_PORT=8081"
+      - "RATE_LIMIT_RPS=${RATE_LIMIT_RPS:-50}"
+      - "RATE_LIMIT_BURST=${RATE_LIMIT_BURST:-100}"
+      - "RATE_LIMIT_IDLE_TTL_SECS=${RATE_LIMIT_IDLE_TTL_SECS:-300}"
     ports:
       - "34004:8080"
       - "34104:8081"
@@ -124,6 +133,9 @@ services:
       - "REGIONSERVICE_PORT=8081"
       - "AUTHSERVICE_HOST=authservice"
       - "AUTHSERVICE_PORT=8081"
+      - "RATE_LIMIT_RPS=${RATE_LIMIT_RPS:-50}"
+      - "RATE_LIMIT_BURST=${RATE_LIMIT_BURST:-100}"
+      - "RATE_LIMIT_IDLE_TTL_SECS=${RATE_LIMIT_IDLE_TTL_SECS:-300}"
     ports:
       - "34006:8080"
       - "34106:8081"
