@@ -105,9 +105,6 @@ services:
     image: ghcr.io/swayrider/routerservice:latest
     container_name: sw-dev-routerservice
     environment:
-      - "PELIAS_PREFIX=pelias-"
-      - "PELIAS_API_POSTFIX=-api"
-      - "PELIAS_API_PORT=3100"
       - "VALHALLA_PREFIX=valhalla-"
       - "VALHALLA_PORT=8002"
       - "REGIONSERVICE_HOST=regionservice"
@@ -121,7 +118,6 @@ services:
     networks:
       - net-sw-dev-sw-internal
       - net-sw-dev-valhalla
-      - net-sw-dev-pelias
 
   searchservice:
     image: ghcr.io/swayrider/searchservice:latest
