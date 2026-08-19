@@ -1,6 +1,6 @@
 # SwayRider
 
-A comprehensive geolocation and routing platform built as a monorepo with a microservices architecture. SwayRider provides multi-region route planning, geocoding, and user authentication services, primarily focused on European regions (Belgium, Netherlands, Luxembourg, France, and Germany).
+A comprehensive geolocation and routing platform built as a multi-repo microservices architecture (each service lives in its own top-level git repo). SwayRider provides multi-region route planning, geocoding, and user authentication services, primarily focused on European regions (Belgium, Netherlands, Luxembourg, France, and Germany).
 
 ## Architecture
 
@@ -12,12 +12,16 @@ Backend Services (Go)
 ├── MailService      - Transactional email delivery
 ├── RegionService    - Geographic region queries
 ├── RouterService    - Multi-modal route planning
+├── SearchService    - Geocoding (Pelias fan-out)
+├── TilesService     - Vector tile serving (MBTiles/MVT)
+├── swayrider-api    - API gateway (JWT validation, rate limiting, circuit breakers, proxying)
 └── Shared Libraries (swlib)
 
 Infrastructure (Docker Compose)
-├── Layer 00: Base (Traefik, Elasticsearch, PostgreSQL)
+├── Layer 00: Base (Traefik, Elasticsearch, PostgreSQL, Redis, WireGuard)
 ├── Layer 10: Geospatial (Valhalla routing, Pelias geocoding)
-└── Layer 20: SwayRider internal services
+├── Layer 20: SwayRider internal services (authservice, mailservice, regionservice, routerservice, searchservice, tilesservice)
+└── Layer 30: SwayRider web services (swayrider-api gateway)
 
 Data Pipeline (Python)
 └── OSM data processing and publication
@@ -52,6 +56,20 @@ Multi-modal route planning supporting:
 - Cross-region routing with border crossing handling
 - Integration with Valhalla (routing) and Pelias (geocoding)
 
+### SearchService
+Geocoding service providing:
+- Fan-out search across per-region Pelias instances
+- Address/POI autocomplete
+
+### TilesService
+Vector tile serving:
+- MBTiles/MVT tile serving across a zoom-level hierarchy (L0–L3)
+
+### swayrider-api
+API gateway — the sole externally reachable entry point:
+- JWT validation, rate limiting, circuit breakers
+- Proxies requests to every other service over gRPC/HTTP
+
 ## Technology Stack
 
 | Layer | Technologies |
@@ -62,24 +80,20 @@ Multi-modal route planning supporting:
 
 ## Project Structure
 
+This `infra` repo is one of several top-level repos that make up the SwayRider platform (backend service code, protos, swlib, and grpcclients each live in their own repo alongside it — see the platform-level `Docs/` repo for the full layout). Its own contents:
+
 ```
-swayrider/
-├── backend/
-│   ├── services/        # Go microservices
-│   │   ├── authservice/
-│   │   ├── mailservice/
-│   │   ├── regionservice/
-│   │   └── routerservice/
-│   ├── protos/          # gRPC/Protocol Buffer definitions
-│   ├── swlib/           # Shared Go utilities
-│   ├── grpcclients/     # gRPC client generators
-│   └── restclients/     # REST client utilities
-├── data-pipeline/       # Python OSM data processing
-├── infra/
-│   └── dev/             # Docker Compose configurations
-├── rest/                # API documentation (Bruno collections)
-└── Makefile             # Build orchestration
+infra/
+├── dev/                  # Full dev environment: layer-00 (base) … layer-30 (web services)
+│   ├── layer-00/         # Traefik, PostgreSQL, Elasticsearch, Redis, WireGuard
+│   ├── layer-10/         # Valhalla (per-region), Pelias (per-region)
+│   ├── layer-20/         # authservice, mailservice, regionservice, routerservice, searchservice, tilesservice
+│   ├── layer-30/         # swayrider-api
+│   └── scripts/          # deploy-*.sh helpers
+└── dev-mini/             # Lightweight single-host dev variant (same layer structure)
 ```
+
+API-testing collections (Bruno) live in the separate `testing` repo, not in `infra`.
 
 ## Data Pipeline
 
@@ -148,32 +162,36 @@ physical road alignment. Each is classified independently.
 ## Development
 
 ### Prerequisites
-- Go 1.21+
+- Go 1.26+ (workspace pins `go 1.26.4` in `go.work`)
 - Docker & Docker Compose
 - Python 3.11+ (for data pipeline)
 - Protocol Buffer compiler (protoc)
 
 ### Getting Started
 
-1. Clone the repository
+1. Clone the repository (and the sibling repos: `authservice`, `mailservice`, `regionservice`, `routerservice`, `searchservice`, `tilesservice`, `swayrider-api`, `swlib`, `grpcclients`, `protos`)
 2. Copy environment templates and configure:
    ```bash
-   cp infra/dev/.env.template infra/dev/.env
+   cp infra/dev/layer-00/env.example infra/dev/layer-00/.env
+   cp infra/dev/layer-10/env.example infra/dev/layer-10/.env
+   cp infra/dev/layer-20/env.example infra/dev/layer-20/.env
+   cp infra/dev/layer-30/env.example infra/dev/layer-30/.env
    ```
 3. Start infrastructure services:
    ```bash
    cd infra/dev
-   docker-compose -f layer-00-base.yml up -d
-   docker-compose -f layer-10-geospatial.yml up -d
-   docker-compose -f layer-20-swayrider.yml up -d
+   docker compose -f layer-00/compose.yaml up -d
+   docker compose -f layer-10/compose.yaml up -d
+   docker compose -f layer-20/compose.yml up -d
+   docker compose -f layer-30/compose.yml up -d
    ```
-4. Generate protobuf files:
+4. Generate protobuf files (from the `protos` repo):
    ```bash
-   make protos
+   cd protos && make
    ```
 
 ### API Testing
-REST API collections for [Bruno](https://www.usebruno.com/) are available in the `rest/` directories throughout the project.
+REST API collections for [Bruno](https://www.usebruno.com/) are available in the separate `testing` repo, under `testing/bruno/`.
 
 ## License
 

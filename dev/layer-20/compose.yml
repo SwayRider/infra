@@ -66,8 +66,12 @@ services:
       - "SMTP_PORT=${MAIL_SMTP_PORT}"
       - "SMTP_USER=${MAIL_SMTP_USER}"
       - "SMTP_PASSWORD=${MAIL_SMTP_PASSWORD}"
+      - "MAIL_ALLOWED_FROM_DOMAINS=${MAIL_ALLOWED_FROM_DOMAINS:-}"
       - "AUTHSERVICE_HOST=authservice"
       - "AUTHSERVICE_PORT=8081"
+      - "RATE_LIMIT_RPS=${RATE_LIMIT_RPS:-50}"
+      - "RATE_LIMIT_BURST=${RATE_LIMIT_BURST:-100}"
+      - "RATE_LIMIT_IDLE_TTL_SECS=${RATE_LIMIT_IDLE_TTL_SECS:-300}"
     ports:
       - "34002:8080"
       - "34102:8081"
@@ -78,8 +82,16 @@ services:
   regionservice:
     image: ghcr.io/swayrider/regionservice:latest
     container_name: sw-dev-regionservice
+    depends_on:
+      authservice:
+        condition: service_started
     environment:
       - "GEODATA_DIR=/data/geodata"
+      - "AUTHSERVICE_HOST=authservice"
+      - "AUTHSERVICE_PORT=8081"
+      - "RATE_LIMIT_RPS=${RATE_LIMIT_RPS:-50}"
+      - "RATE_LIMIT_BURST=${RATE_LIMIT_BURST:-100}"
+      - "RATE_LIMIT_IDLE_TTL_SECS=${RATE_LIMIT_IDLE_TTL_SECS:-300}"
     volumes:
       - "${GEODATA_PATH}:/data/geodata:ro"
     ports:
@@ -93,20 +105,19 @@ services:
     image: ghcr.io/swayrider/routerservice:latest
     container_name: sw-dev-routerservice
     environment:
-      - "PELIAS_PREFIX=pelias-"
-      - "PELIAS_API_POSTFIX=-api"
-      - "PELIAS_API_PORT=3100"
       - "VALHALLA_PREFIX=valhalla-"
       - "VALHALLA_PORT=8002"
       - "REGIONSERVICE_HOST=regionservice"
       - "REGIONSERVICE_PORT=8081"
+      - "RATE_LIMIT_RPS=${RATE_LIMIT_RPS:-50}"
+      - "RATE_LIMIT_BURST=${RATE_LIMIT_BURST:-100}"
+      - "RATE_LIMIT_IDLE_TTL_SECS=${RATE_LIMIT_IDLE_TTL_SECS:-300}"
     ports:
       - "34004:8080"
       - "34104:8081"
     networks:
       - net-sw-dev-sw-internal
       - net-sw-dev-valhalla
-      - net-sw-dev-pelias
 
   searchservice:
     image: ghcr.io/swayrider/searchservice:latest
@@ -118,6 +129,9 @@ services:
       - "REGIONSERVICE_PORT=8081"
       - "AUTHSERVICE_HOST=authservice"
       - "AUTHSERVICE_PORT=8081"
+      - "RATE_LIMIT_RPS=${RATE_LIMIT_RPS:-50}"
+      - "RATE_LIMIT_BURST=${RATE_LIMIT_BURST:-100}"
+      - "RATE_LIMIT_IDLE_TTL_SECS=${RATE_LIMIT_IDLE_TTL_SECS:-300}"
     ports:
       - "34006:8080"
       - "34106:8081"
