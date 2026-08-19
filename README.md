@@ -190,9 +190,6 @@ physical road alignment. Each is classified independently.
    cd protos && make
    ```
 
-### API Testing
-REST API collections for [Bruno](https://www.usebruno.com/) are available in the separate `testing` repo, under `testing/bruno/`.
-
 ## License
 
 Proprietary
