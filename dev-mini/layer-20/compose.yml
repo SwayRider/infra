@@ -24,7 +24,7 @@ networks:
 services:
   authservice:
     image: ghcr.io/swayrider/authservice:dev-latest
-    #image: ghcr.io/swayrider/authservice:v0.1.5-fix-code-review-2026-08-b1
+    #image: ghcr.io/swayrider/authservice:v0.1.6-jwt-key-encryption-b1
     container_name: sw-dev-authservice
     restart: unless-stopped
     environment:
@@ -39,6 +39,8 @@ services:
       - "REGISTRATION_MODE=${AUTH_REGISTRATION_MODE}"
       - "REGISTRATION_URL=${AUTH_REGISTRATION_URL}"
       - "COOKIE_NAMESPACE=${COOKIE_NAMESPACE}"
+      - "ENCRYPTION_MASTER_KEY=${AUTH_ENCRYPTION_MASTER_KEY}"
+      - "ENCRYPTION_MASTER_KEY_PREVIOUS=${AUTH_ENCRYPTION_MASTER_KEY_PREVIOUS:-}"
       - "MAILSERVICE_HOST=mailservice"
       - "MAILSERVICE_PORT=8081"
       - "LOGIN_LOCKOUT_THRESHOLD=${LOGIN_LOCKOUT_THRESHOLD:-5}"
