@@ -23,8 +23,8 @@ networks:
 
 services:
   authservice:
-    #image: ghcr.io/swayrider/authservice:dev-latest
-    image: ghcr.io/swayrider/authservice:v0.1.6-jwt-key-encryption-b1
+    image: ghcr.io/swayrider/authservice:dev-latest
+    #image: ghcr.io/swayrider/authservice:v0.1.6-jwt-key-encryption-b1
     container_name: sw-dev-authservice
     restart: unless-stopped
     environment:
