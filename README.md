@@ -13,7 +13,7 @@ Backend Services (Go)
 ├── RegionService    - Geographic region queries
 ├── RouterService    - Multi-modal route planning
 ├── SearchService    - Geocoding (Pelias fan-out)
-├── TilesService     - Vector tile serving (MBTiles/MVT)
+├── TilesService     - Vector tile serving (MVT; MBTiles today, migrating to planet PMTiles)
 ├── swayrider-api    - API gateway (JWT validation, rate limiting, circuit breakers, proxying)
 └── Shared Libraries (swlib)
 
@@ -23,9 +23,11 @@ Infrastructure (Docker Compose)
 ├── Layer 20: SwayRider internal services (authservice, mailservice, regionservice, routerservice, searchservice, tilesservice)
 └── Layer 30: SwayRider web services (swayrider-api gateway)
 
-Data Pipeline (Python)
-└── OSM data processing and publication
+Data Manager (Python, build host; replaces the deprecated data-pipeline)
+└── OSM/Valhalla/Pelias/border builds, planet PMTiles + styles; releases copied to the target
 ```
+
+See [`Docs/MIGRATION-DATA-MANAGER.md`](../Docs/MIGRATION-DATA-MANAGER.md) for the migration steps and the copy-based deployment strategy (per-artifact roots, `current` symlinks).
 
 ## Services
 
@@ -63,7 +65,7 @@ Geocoding service providing:
 
 ### TilesService
 Vector tile serving:
-- MBTiles/MVT tile serving across a zoom-level hierarchy (L0–L3)
+- MVT tile serving: MBTiles across a zoom-level hierarchy (L0–L3) today; single planet PMTiles release (plus styles, fonts, sprites) after migration
 
 ### swayrider-api
 API gateway — the sole externally reachable entry point:
@@ -76,7 +78,7 @@ API gateway — the sole externally reachable entry point:
 |-------|-------------|
 | Backend | Go, gRPC, gRPC-Gateway, Protocol Buffers, PostgreSQL, sqlc |
 | Infrastructure | Docker, Traefik, Elasticsearch, Valhalla, Pelias |
-| Data Pipeline | Python, GeoPandas, Shapely, Osmium |
+| Data Manager | Python, Flask, RQ, SQLite, GeoPandas, Shapely, Osmium (replaces data-pipeline) |
 
 ## Project Structure
 
@@ -95,12 +97,16 @@ infra/
 
 API-testing collections (Bruno) live in the separate `testing` repo, not in `infra`.
 
-## Data Pipeline
+## Data Manager (and the deprecated Data Pipeline)
 
-The Python data pipeline (`data-pipeline/`) processes OpenStreetMap (OSM) data into MBTiles
+`data-manager/` builds the geodata and publishes it as releases that are **copied** to the target server (see [`Docs/MIGRATION-DATA-MANAGER.md`](../Docs/MIGRATION-DATA-MANAGER.md)). Planned `infra/data-manager/compose.yaml` holds its dedicated Redis (`sw-datamanager-redis`, host port 36389).
+
+> **Deprecated:** the sections below describe the legacy `data-pipeline/` MBTiles output (tile layers L0–L3 and the `places` layer). They stay until tilesservice is migrated to PMTiles (migration Phase G) and are not valid for the Protomaps planet tiles.
+
+The Python data pipeline (`data-pipeline/`) processed OpenStreetMap (OSM) data into MBTiles
 files served by the tile backend.
 
-### Tile layers
+### Tile layers (legacy)
 
 | Layer | Zoom levels | Source | Description |
 |-------|-------------|--------|-------------|
@@ -164,7 +170,7 @@ physical road alignment. Each is classified independently.
 ### Prerequisites
 - Go 1.26+ (workspace pins `go 1.26.4` in `go.work`)
 - Docker & Docker Compose
-- Python 3.11+ (for data pipeline)
+- Python 3.11+ (for data-manager, build host only)
 - Protocol Buffer compiler (protoc)
 
 ### Getting Started

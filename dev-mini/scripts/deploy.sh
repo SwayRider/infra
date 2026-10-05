@@ -2,6 +2,9 @@
 #
 # deploy.sh - List available tags or deploy a specific one from a geodata store
 #
+# DEPRECATED: legacy data-pipeline deploy; replaced by the copy-based release deploy
+# (see Docs/MIGRATION-DATA-MANAGER.md section 3).
+#
 # The geodata store is the directory produced by the data-pipeline's publish step:
 # each sub-directory is a tag (e.g. 2026-04-29) containing the five archive files.
 #

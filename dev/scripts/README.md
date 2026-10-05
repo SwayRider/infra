@@ -1,5 +1,7 @@
 # Dev Server Data Deployment
 
+> **⚠️ DEPRECATED** — These scripts deploy the legacy `data-pipeline` tarballs. They are replaced by the copy-based release deployment (per-artifact roots, `current` symlink, `copy`/`activate`/`rollback`) described in [`Docs/MIGRATION-DATA-MANAGER.md`](../../../Docs/MIGRATION-DATA-MANAGER.md) §3. Removal: migration Phase G.
+
 Deploy data-pipeline output (tar files + manifests) to the dev server's docker volume layout.
 
 ## Prerequisites

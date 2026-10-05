@@ -2,6 +2,8 @@
 #
 # deploy-all.sh - Deploy all data-pipeline output to the dev server
 #
+# DEPRECATED: see Docs/MIGRATION-DATA-MANAGER.md section 3 for the replacement.
+#
 # Runs all deploy scripts in dependency order.
 #
 # Usage:
