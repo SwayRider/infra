@@ -104,6 +104,38 @@ services:
           cpus: '${ES_CPU_LIMIT:-2}'
           memory: ${ES_MEM_LIMIT:-5g}
 
+  # Garage: S3-compatible object store for the PMTiles planet releases (data-manager writes, tilesservice reads).
+  # No shell in this image: set-up (layout, bucket, keys) is done by ./garage/init.sh from the host.
+  garage:
+    image: dxflrs/garage:${GARAGE_VERSION:-v2.3.0}
+    container_name: sw-dev-garage
+    restart: unless-stopped
+    command: ["/garage", "server"]
+    environment:
+      - GARAGE_RPC_SECRET=${GARAGE_RPC_SECRET}
+      - GARAGE_ADMIN_TOKEN=${GARAGE_ADMIN_TOKEN}
+    ports:
+      # S3 API. Loopback by default; set GARAGE_S3_BIND to the WireGuard/LAN address (or 0.0.0.0)
+      # when data-manager runs on another machine. The admin API (3903) stays internal.
+      - "${GARAGE_S3_BIND:-127.0.0.1}:${GARAGE_S3_PORT:-39000}:3900"
+    volumes:
+      - "./garage/garage.toml:/etc/garage.toml:ro"
+      - "${GARAGE_META_PATH}:/var/lib/garage/meta"
+      - "${GARAGE_DATA_PATH}:/var/lib/garage/data"
+    networks:
+      - net-sw-dev-data
+    healthcheck:
+      test: ["CMD", "/garage", "status"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          cpus: '${GARAGE_CPU_LIMIT:-1}'
+          memory: ${GARAGE_MEM_LIMIT:-512m}
+
   # WireGuard VPN
   wireguard:
     image: ghcr.io/wg-easy/wg-easy
