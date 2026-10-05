@@ -92,7 +92,7 @@ infra/
 │   ├── layer-20/         # authservice, mailservice, regionservice, routerservice, searchservice, tilesservice
 │   ├── layer-30/         # swayrider-api
 │   └── scripts/          # deploy-*.sh helpers
-└── dev-mini/             # Lightweight single-host dev variant (same layer structure)
+└── dev-mini/             # Lightweight single-host dev variant (same layer structure); layer-00 also runs Garage (S3 object store for the PMTiles planet), see dev-mini/README.md
 ```
 
 API-testing collections (Bruno) live in the separate `testing` repo, not in `infra`.

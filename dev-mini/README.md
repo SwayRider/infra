@@ -6,12 +6,33 @@ Same layer structure as `dev`:
 
 | Layer | Content |
 |-------|---------|
-| `layer-00` | Traefik, Elasticsearch, PostgreSQL, Redis, WireGuard |
+| `layer-00` | Traefik, Elasticsearch, PostgreSQL, Redis, WireGuard, Garage (S3 object store for the PMTiles planet) |
 | `layer-10` | Valhalla (per region, ports 33001–33003), Pelias (placeholder, libpostal, pip + api per region) |
 | `layer-20` | authservice, mailservice, regionservice, routerservice, searchservice, tilesservice, swayrider-api-register |
 | `layer-30` | swayrider-api gateway |
 
 Start in order (`layer-00` → `layer-30`) with `docker compose -f layer-NN/compose.y*ml up -d`; copy each layer's `env.example` to `.env` first.
+
+## Object store (Garage)
+
+The PMTiles planet release is stored in **Garage**, a single-node S3-compatible object store in `layer-00` (decision: [`Docs/MIGRATION-DATA-MANAGER.md`](../../Docs/MIGRATION-DATA-MANAGER.md) §3.1a). `data-manager` uploads releases with a read/write key, `tilesservice` reads them with a read-only key (ranged GETs). Other artifact classes are unaffected.
+
+Set up, from `layer-00/`:
+
+```bash
+cp env.example .env     # set GARAGE_DATA_PATH/GARAGE_META_PATH, the secrets and the two key pairs (section 6)
+mkdir -p "$GARAGE_DATA_PATH" "$GARAGE_META_PATH"   # data on the big SSD (~140 GB per release, keep 2), meta on a small fast disk
+docker compose -f compose.yaml up -d               # starts everything incl. garage; the one-shot garage-init service does the rest
+docker logs sw-dev-garage-init                     # "Garage ready: bucket swayrider-tiles, keys …"
+./garage/smoke-test.sh  # put/get, multipart, ranged GET, pointer overwrite, read-only key (needs the AWS CLI)
+```
+
+`garage-init` (`garage/init.sh`, alpine + curl + jq, Garage admin API v2) runs on every `docker compose up` and is idempotent: it applies the single-node layout, creates the bucket `swayrider-tiles` and imports the read/write and read-only keys from `.env`; existing ones are left alone. It exits non-zero with Garage's answer when something is wrong (check the logs above). It needs network access on first start to `apk add curl jq`.
+
+- S3 endpoint: `http://127.0.0.1:39000` by default (path-style, region `garage`, bucket `swayrider-tiles`). When `data-manager` runs on another machine set `GARAGE_S3_BIND` to the WireGuard/LAN address (or `0.0.0.0`) and re-run `docker compose up -d garage`; test from that machine with `GARAGE_ENDPOINT=http://<host>:39000 ./garage/smoke-test.sh`. The admin API (3903) and RPC (3901) are not published.
+- Keys come from `.env` (never committed): generate with `echo "GK$(openssl rand -hex 12)"; openssl rand -hex 32`. `garage-init` only imports them; rotating means deleting the key in Garage (`docker exec sw-dev-garage /garage key delete <name> --yes`) and running `docker compose up -d garage-init` again.
+- Release layout in the bucket and the `current.json` pointer: `data-manager/SERVICES.md` (tiles contract).
+- Backup: the data directory is the only copy of the planet in this setup; it can be re-created from `data-manager`'s package.
 
 ## Data deployment
 
