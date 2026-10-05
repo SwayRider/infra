@@ -79,5 +79,5 @@ cd backend && go test ./swlib/...
 ## Notes
 
 * Generated binaries should be removed after verification
-* Do not run data-pipeline code locally
+* Do not run data-pipeline code locally (deprecated; heavy data-manager stages also run on the build host only)
 

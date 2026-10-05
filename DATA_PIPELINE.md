@@ -1,5 +1,7 @@
 # Data Pipeline — Tile Generation
 
+> **⚠️ DEPRECATED** — Tiles are no longer built here. They are replaced by the Protomaps planet PMTiles downloaded by `data-manager`. See [`Docs/MIGRATION-DATA-MANAGER.md`](../Docs/MIGRATION-DATA-MANAGER.md). This file is removed in migration Phase G.
+
 ## Purpose
 
 The data pipeline generates MBTiles files consumed by the `tilesservice`. It is resource-intensive and intended to run **only on the server**.
