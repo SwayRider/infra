@@ -1,65 +1,91 @@
-#!/bin/bash
-# One-time (idempotent) setup of the Garage object store: single-node layout, the tiles bucket and
-# two access keys (read/write for the data-manager deploy, read-only for tilesservice).
-#
-# Run on the dev-mini host after `docker compose -f compose.yaml up -d garage`:
-#   ./garage/init.sh            # reads ./.env (or the current environment)
-#
-# Keys are taken from the environment, never generated here, so they stay in your secret store:
-#   GARAGE_RW_ACCESS_KEY_ID / GARAGE_RW_SECRET_KEY   (id: GK + 24 hex chars, secret: 64 hex chars)
-#   GARAGE_RO_ACCESS_KEY_ID / GARAGE_RO_SECRET_KEY
-# Generate a pair with:  echo "GK$(openssl rand -hex 12)"; openssl rand -hex 32
-set -euo pipefail
+#!/bin/sh
+# One-shot, idempotent setup of the Garage object store, run by the `garage-init` compose service
+# (alpine + curl + jq) through Garage's admin API v2:
+#   1. single-node cluster layout   2. the tiles bucket   3. two access keys imported from the
+#   environment (read/write for the data-manager deploy, read-only for tilesservice).
+# Safe to run on every `docker compose up`: existing layout, bucket and keys are left alone.
+set -eu
 
-cd "$(dirname "$0")/.."
-if [ -f .env ]; then set -a; . ./.env; set +a; fi
-
-CONTAINER="${GARAGE_CONTAINER:-sw-dev-garage}"
+API="${GARAGE_ADMIN_URL:-http://garage:3903}/v2"
 BUCKET="${GARAGE_TILES_BUCKET:-swayrider-tiles}"
-CAPACITY="${GARAGE_CAPACITY:-1T}"   # only a hint for data placement on a single node
 ZONE="${GARAGE_ZONE:-dc1}"
+CAPACITY="${GARAGE_CAPACITY_BYTES:-1099511627776}"   # only a placement hint on a single node
+: "${GARAGE_ADMIN_TOKEN:?GARAGE_ADMIN_TOKEN is not set}"
+: "${GARAGE_RW_ACCESS_KEY_ID:?GARAGE_RW_ACCESS_KEY_ID is not set}"
+: "${GARAGE_RW_SECRET_KEY:?GARAGE_RW_SECRET_KEY is not set}"
+: "${GARAGE_RO_ACCESS_KEY_ID:?GARAGE_RO_ACCESS_KEY_ID is not set}"
+: "${GARAGE_RO_SECRET_KEY:?GARAGE_RO_SECRET_KEY is not set}"
 
-for v in GARAGE_RW_ACCESS_KEY_ID GARAGE_RW_SECRET_KEY GARAGE_RO_ACCESS_KEY_ID GARAGE_RO_SECRET_KEY; do
-  [ -n "${!v:-}" ] || { echo "error: $v is not set (see env.example, section 6)" >&2; exit 1; }
+if ! command -v curl >/dev/null || ! command -v jq >/dev/null; then
+  apk add --no-cache curl jq >/dev/null
+fi
+
+OUT="$(mktemp)"
+# api <METHOD> <path[?query]> [json body]  -> body in $OUT, prints the HTTP status
+api() {
+  if [ "$#" -ge 3 ]; then
+    curl -sS -o "$OUT" -w '%{http_code}' -X "$1" -H "Authorization: Bearer $GARAGE_ADMIN_TOKEN" \
+      -H 'Content-Type: application/json' -d "$3" "$API/$2"
+  else
+    curl -sS -o "$OUT" -w '%{http_code}' -X "$1" -H "Authorization: Bearer $GARAGE_ADMIN_TOKEN" "$API/$2"
+  fi
+}
+# must <METHOD> <path> [body]: fail with Garage's answer unless the status is 2xx
+must() {
+  code="$(api "$@")" || { echo "error: cannot reach $API" >&2; exit 1; }
+  case "$code" in 2??) ;; *) echo "error: $1 $2 -> HTTP $code: $(cat "$OUT")" >&2; exit 1 ;; esac
+}
+
+echo "Waiting for the Garage admin API at $API ..."
+i=0
+until code="$(api GET GetClusterStatus 2>/dev/null || true)"; [ "$code" = "200" ]; do
+  case "$code" in 401|403) echo "error: Garage rejected GARAGE_ADMIN_TOKEN (HTTP $code); it must match the token the garage container started with" >&2; exit 1 ;; esac
+  i=$((i + 1)); [ "$i" -le 60 ] || { echo "error: Garage did not come up (last answer: $(cat "$OUT"))" >&2; exit 1; }
+  sleep 2
 done
 
-garage() { docker exec "$CONTAINER" /garage "$@"; }
-
-echo "Waiting for $CONTAINER ..."
-for _ in $(seq 1 30); do garage status >/dev/null 2>&1 && break; sleep 1; done
-garage status >/dev/null
-
-# --- layout (single node) ---
-NODE_ID="$(garage node id -q 2>/dev/null | cut -d@ -f1)"
-if garage status | grep -q "NO ROLE ASSIGNED"; then
-  echo "Assigning layout to node ${NODE_ID:0:16}…"
-  garage layout assign -z "$ZONE" -c "$CAPACITY" "$NODE_ID"
-  garage layout apply --version 1
+# --- 1. layout (single node) ---
+NODE_ID="$(jq -r '.nodes[0].id' "$OUT")"
+if [ "$(jq -r '.nodes[0].role == null' "$OUT")" = "true" ]; then
+  echo "Assigning the single-node layout to $(printf %.16s "$NODE_ID")…"
+  must POST UpdateClusterLayout "{\"nodeId\":\"$NODE_ID\",\"zone\":\"$ZONE\",\"capacity\":$CAPACITY,\"tags\":[]}"
+  must GET GetClusterLayout
+  VERSION="$(jq -r '.version + 1' "$OUT")"
+  must POST ApplyClusterLayout "{\"version\":$VERSION}"
+  echo "Layout applied (version $VERSION)."
 else
   echo "Layout already applied."
 fi
 
-# --- bucket ---
-if garage bucket info "$BUCKET" >/dev/null 2>&1; then
+# --- 2. bucket ---
+code="$(api GET "GetBucketInfo?globalAlias=$BUCKET")"
+if [ "$code" = "200" ]; then
   echo "Bucket $BUCKET exists."
 else
   echo "Creating bucket $BUCKET"
-  garage bucket create "$BUCKET"
+  j=0
+  until [ "$(api POST CreateBucket "{\"globalAlias\":\"$BUCKET\"}")" = "200" ]; do   # the layout needs a moment
+    j=$((j + 1)); [ "$j" -le 15 ] || { echo "error: CreateBucket failed: $(cat "$OUT")" >&2; exit 1; }
+    sleep 2
+  done
+  must GET "GetBucketInfo?globalAlias=$BUCKET"
 fi
+BUCKET_ID="$(jq -r '.id' "$OUT")"
 
-# --- keys (imported from the environment) ---
-import_key() { # <name> <id> <secret>
-  if garage key info "$1" >/dev/null 2>&1; then
+# --- 3. keys, imported from the environment ---
+ensure_key() { # <name> <id> <secret>
+  code="$(api GET "GetKeyInfo?id=$2")"
+  if [ "$code" = "200" ]; then
     echo "Key $1 exists."
   else
     echo "Importing key $1"
-    garage key import --yes -n "$1" "$2" "$3" >/dev/null
+    must POST ImportKey "{\"name\":\"$1\",\"accessKeyId\":\"$2\",\"secretAccessKey\":\"$3\"}"
   fi
 }
-import_key swayrider-tiles-rw "$GARAGE_RW_ACCESS_KEY_ID" "$GARAGE_RW_SECRET_KEY"
-import_key swayrider-tiles-ro "$GARAGE_RO_ACCESS_KEY_ID" "$GARAGE_RO_SECRET_KEY"
+ensure_key swayrider-tiles-rw "$GARAGE_RW_ACCESS_KEY_ID" "$GARAGE_RW_SECRET_KEY"
+ensure_key swayrider-tiles-ro "$GARAGE_RO_ACCESS_KEY_ID" "$GARAGE_RO_SECRET_KEY"
 
-garage bucket allow --read --write "$BUCKET" --key swayrider-tiles-rw >/dev/null
-garage bucket allow --read "$BUCKET" --key swayrider-tiles-ro >/dev/null
+must POST AllowBucketKey "{\"bucketId\":\"$BUCKET_ID\",\"accessKeyId\":\"$GARAGE_RW_ACCESS_KEY_ID\",\"permissions\":{\"read\":true,\"write\":true}}"
+must POST AllowBucketKey "{\"bucketId\":\"$BUCKET_ID\",\"accessKeyId\":\"$GARAGE_RO_ACCESS_KEY_ID\",\"permissions\":{\"read\":true}}"
 
-echo "Done. S3 endpoint: http://<host>:${GARAGE_S3_PORT:-39000}, region garage, bucket $BUCKET, path-style."
+echo "Garage ready: bucket $BUCKET, keys swayrider-tiles-rw (read/write) and swayrider-tiles-ro (read-only)."

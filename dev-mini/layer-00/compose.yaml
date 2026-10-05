@@ -105,7 +105,7 @@ services:
           memory: ${ES_MEM_LIMIT:-5g}
 
   # Garage: S3-compatible object store for the PMTiles planet releases (data-manager writes, tilesservice reads).
-  # No shell in this image: set-up (layout, bucket, keys) is done by ./garage/init.sh from the host.
+  # No shell in this image: set-up (layout, bucket, keys) is done by the garage-init service below.
   garage:
     image: dxflrs/garage:${GARAGE_VERSION:-v2.3.0}
     container_name: sw-dev-garage
@@ -135,6 +135,27 @@ services:
         limits:
           cpus: '${GARAGE_CPU_LIMIT:-1}'
           memory: ${GARAGE_MEM_LIMIT:-512m}
+
+  # One-shot, idempotent set-up of Garage through its admin API (single-node layout, bucket, rw + ro keys).
+  # Re-run on every `docker compose up`; exits 0 when everything is in place.
+  garage-init:
+    image: alpine:3
+    container_name: sw-dev-garage-init
+    restart: "no"
+    depends_on:
+      - garage
+    environment:
+      - GARAGE_ADMIN_TOKEN=${GARAGE_ADMIN_TOKEN}
+      - GARAGE_TILES_BUCKET=${GARAGE_TILES_BUCKET:-swayrider-tiles}
+      - GARAGE_RW_ACCESS_KEY_ID=${GARAGE_RW_ACCESS_KEY_ID}
+      - GARAGE_RW_SECRET_KEY=${GARAGE_RW_SECRET_KEY}
+      - GARAGE_RO_ACCESS_KEY_ID=${GARAGE_RO_ACCESS_KEY_ID}
+      - GARAGE_RO_SECRET_KEY=${GARAGE_RO_SECRET_KEY}
+    volumes:
+      - "./garage/init.sh:/init.sh:ro"
+    entrypoint: ["/bin/sh", "/init.sh"]
+    networks:
+      - net-sw-dev-data
 
   # WireGuard VPN
   wireguard:
