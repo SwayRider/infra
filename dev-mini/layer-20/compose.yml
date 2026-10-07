@@ -103,7 +103,12 @@ services:
       - "AUTHSERVICE_HOST=authservice"
       - "AUTHSERVICE_PORT=8081"
     volumes:
-      - "${GEODATA_PATH}:/data/geodata:ro"
+      - type: bind
+        source: ${GEODATA_ROOT}/current
+        target: /data/geodata
+        read_only: true
+        bind:
+          create_host_path: false  # fails until the first geodata deploy instead of creating an empty directory
     ports:
       - "34003:8080"
       - "34103:8081"
@@ -201,8 +206,17 @@ services:
       - "SERVICE_PREFIX=${TILESSERVICE_PUBLIC_PATH_PREFIX}"
       - "AUTHSERVICE_HOST=authservice"
       - "AUTHSERVICE_PORT=8081"
+      # Planet tileset (PMTiles) from the object store, read-only key. PMTILES_URL comes from tiles-release.env,
+      # which the data-manager tiles deploy writes (s3://<bucket>/releases/<tag>/tiles.pmtiles) before recreating the container.
+      - "S3_ENDPOINT=${TILES_S3_ENDPOINT}"
+      - "S3_REGION=garage"
+      - "S3_ACCESS_KEY_ID=${TILES_S3_ACCESS_KEY_ID}"
+      - "S3_SECRET_ACCESS_KEY=${TILES_S3_SECRET_KEY}"
+    env_file:
+      - path: ./tiles-release.env
+        required: false
     volumes:
-      - "${TILES_DATA_PATH}:/data/tiles:ro"
+      - "${TILES_ROOT}/base:/data/tiles:ro"   # legacy MBTiles (transition only)
       - "${TILES_CACHE_PATH}:/data/cache"
     ports:
       - "34005:8080"
