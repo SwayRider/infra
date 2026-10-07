@@ -52,6 +52,7 @@ ensure() {  # ensure VAR SUBDIR OWNER_UID
     fi
 }
 ensure VALHALLA_ROOT releases
+for r in benelux france germany; do ensure VALHALLA_ROOT "work/$r" 59999; done  # scratch /custom_files of the valhalla containers
 ensure PELIAS_ROOT releases
 ensure GEODATA_ROOT releases
 ensure TILES_ROOT base

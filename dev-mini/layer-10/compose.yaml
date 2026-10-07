@@ -31,10 +31,10 @@ services:
       - "server_threads=${VALHALLA_SERVER_THREADS}"
     ports:
       - "33001:8002"
-    # /custom_files is a scratch volume (the image writes file_hashes.txt etc. there); the release files are
-    # mounted into it read-only. `current` is resolved when the container starts, so a restart picks up a new release.
+    # /custom_files is a scratch directory on the same disk as the releases (${VALHALLA_ROOT}/work/<region>; the image
+    # writes file_hashes.txt etc. there, uid 59999); the release files are mounted into it read-only. `current` is resolved when the container starts, so a restart picks up a new release.
     volumes:
-      - valhalla-benelux-work:/custom_files
+      - '${VALHALLA_ROOT}/work/benelux:/custom_files'
       - type: bind
         source: ${VALHALLA_ROOT}/current/benelux/valhalla_tiles.tar
         target: /custom_files/valhalla_tiles.tar
@@ -71,10 +71,10 @@ services:
       - "server_threads=${VALHALLA_SERVER_THREADS}"
     ports:
       - "33002:8002"
-    # /custom_files is a scratch volume (the image writes file_hashes.txt etc. there); the release files are
-    # mounted into it read-only. `current` is resolved when the container starts, so a restart picks up a new release.
+    # /custom_files is a scratch directory on the same disk as the releases (${VALHALLA_ROOT}/work/<region>; the image
+    # writes file_hashes.txt etc. there, uid 59999); the release files are mounted into it read-only. `current` is resolved when the container starts, so a restart picks up a new release.
     volumes:
-      - valhalla-france-work:/custom_files
+      - '${VALHALLA_ROOT}/work/france:/custom_files'
       - type: bind
         source: ${VALHALLA_ROOT}/current/france/valhalla_tiles.tar
         target: /custom_files/valhalla_tiles.tar
@@ -111,10 +111,10 @@ services:
       - "server_threads=${VALHALLA_SERVER_THREADS}"
     ports:
       - "33003:8002"
-    # /custom_files is a scratch volume (the image writes file_hashes.txt etc. there); the release files are
-    # mounted into it read-only. `current` is resolved when the container starts, so a restart picks up a new release.
+    # /custom_files is a scratch directory on the same disk as the releases (${VALHALLA_ROOT}/work/<region>; the image
+    # writes file_hashes.txt etc. there, uid 59999); the release files are mounted into it read-only. `current` is resolved when the container starts, so a restart picks up a new release.
     volumes:
-      - valhalla-germany-work:/custom_files
+      - '${VALHALLA_ROOT}/work/germany:/custom_files'
       - type: bind
         source: ${VALHALLA_ROOT}/current/germany/valhalla_tiles.tar
         target: /custom_files/valhalla_tiles.tar
@@ -362,11 +362,3 @@ services:
     networks:
       - net-sw-dev-pelias
       - net-sw-dev-data
-
-volumes:
-  valhalla-benelux-work:
-    name: sw-dev-valhalla-benelux-work
-  valhalla-france-work:
-    name: sw-dev-valhalla-france-work
-  valhalla-germany-work:
-    name: sw-dev-valhalla-germany-work

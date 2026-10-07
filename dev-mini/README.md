@@ -39,14 +39,14 @@ docker logs sw-dev-garage-init                     # "Garage ready: bucket swayr
 Data is produced by [`data-manager`](../../data-manager) (possibly on another machine) and **copied** here as immutable releases. Each artifact class has its own root (env var in the layer `.env`, see `env.example`), so classes can live on separate drives, plus a `current` symlink that is switched atomically:
 
 ```
-$VALHALLA_ROOT/  current -> releases/<tag>/<region>/{valhalla_tiles.tar, admin.sqlite, tz_world.sqlite}
+$VALHALLA_ROOT/  work/<region>/ (scratch)   current -> releases/<tag>/<region>/{valhalla_tiles.tar, admin.sqlite, tz_world.sqlite}
 $PELIAS_ROOT/    current -> releases/<tag>/{placeholder/data/store.sqlite3, <region>/{wof/sqlite/, interpolation/{street,address}.db, pelias.json}}
 $GEODATA_ROOT/   current -> releases/<tag>/{manifest.yml, contours/, border-crossings/}
 $TILES_ROOT/     base/  (legacy MBTiles, transition only)       planet PMTiles: Garage, releases/<tag>/ + current.json
 $ES_SNAPSHOTS_PATH/<tag>/<region>/   snapshot repository of a release (restored into Elasticsearch)
 ```
 
-Compose mounts the files of `<ROOT>/current/...` read-only (`create_host_path: false`): **a service whose class has not been deployed yet does not start** (instead of Docker creating empty root-owned directories). `current` is resolved when a container starts, so activating a release means switching the symlink and `docker restart`ing the services of that class. Valhalla gets a scratch volume for `/custom_files` (the image writes `file_hashes.txt` there) with the release files mounted into it. Pelias API and PIP read the release's `pelias.json`, whose `api.indexName` pins the concrete Elasticsearch index of that release, so there is no alias to switch: restore the index, switch `current`, restart. Each region also has a `pelias-<region>-interpolation` service (ports 33112/33122/33132) that the API reaches over `net-sw-dev-pelias`.
+Compose mounts the files of `<ROOT>/current/...` read-only (`create_host_path: false`): **a service whose class has not been deployed yet does not start** (instead of Docker creating empty root-owned directories). `current` is resolved when a container starts, so activating a release means switching the symlink and `docker restart`ing the services of that class. Valhalla gets a scratch directory `${VALHALLA_ROOT}/work/<region>` (uid 59999, tiny: the image writes `file_hashes.txt` there) as `/custom_files`, with the release files mounted into it read-only; nothing goes to Docker's own storage. Pelias API and PIP read the release's `pelias.json`, whose `api.indexName` pins the concrete Elasticsearch index of that release, so there is no alias to switch: restore the index, switch `current`, restart. Each region also has a `pelias-<region>-interpolation` service (ports 33112/33122/33132) that the API reaches over `net-sw-dev-pelias`.
 
 **Tiles** live in Garage (see above). `data-manager` uploads `releases/<tag>/`, writes `current.json` last, writes `layer-20/tiles-release.env` (`PMTILES_URL=s3://swayrider-tiles/releases/<tag>/tiles.pmtiles`, git-ignored) and recreates `tilesservice` (`docker compose up -d --force-recreate tilesservice`); that last step goes away when tilesservice reloads on `current.json`.
 
