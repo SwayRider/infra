@@ -36,16 +36,42 @@ docker logs sw-dev-garage-init                     # "Garage ready: bucket swayr
 
 ## Data deployment
 
-Data is produced by [`data-manager`](../../data-manager) (possibly on another machine) and **copied** here as immutable releases. Each artifact class has its own root, so classes can live on separate drives, plus a `current` symlink switched atomically:
+Data is produced by [`data-manager`](../../data-manager) (possibly on another machine) and **copied** here as immutable releases. Each artifact class has its own root (env var in the layer `.env`, see `env.example`), so classes can live on separate drives, plus a `current` symlink that is switched atomically:
 
 ```
-$TILES_ROOT/     current -> releases/<id>/{tiles.pmtiles, manifest.json, styles/, glyphs/, sprites/}
-$VALHALLA_ROOT/  current -> releases/<id>/<region>/{valhalla_tiles.tar, admin.sqlite, tz_world.sqlite}
-$PELIAS_ROOT/    current -> releases/<id>/<region>/{wof/, interpolation/, pelias.json}
-$GEODATA_ROOT/   current -> releases/<id>/{manifest.yml, contours/, border-crossings/}
-$ES_SNAPSHOTS_PATH, $ES_DATA_PATH   (existing variables)
+$VALHALLA_ROOT/  work/<region>/ (scratch)   current -> releases/<tag>/<region>/{valhalla_tiles.tar, admin.sqlite, tz_world.sqlite}
+$PELIAS_ROOT/    current -> releases/<tag>/{placeholder/data/store.sqlite3, <region>/{wof/sqlite/, interpolation/{street,address}.db, pelias.json}}
+$GEODATA_ROOT/   current -> releases/<tag>/{manifest.yml, contours/, border-crossings/}
+$TILES_ROOT/     base/  (legacy MBTiles, transition only)       planet PMTiles: Garage, releases/<tag>/ + current.json
+$ES_SNAPSHOTS_PATH/<tag>/<region>/   snapshot repository of a release (restored into Elasticsearch)
 ```
 
-The full procedure (copy, verify, activate, rollback), activation order and the target compose changes (including the new `pelias-interpolation` service) are in [`Docs/MIGRATION-DATA-MANAGER.md`](../../Docs/MIGRATION-DATA-MANAGER.md) §3 and §6.
+Compose mounts the files of `<ROOT>/current/...` read-only (`create_host_path: false`): **a service whose class has not been deployed yet does not start** (instead of Docker creating empty root-owned directories). `current` is resolved when a container starts, so activating a release means switching the symlink and `docker restart`ing the services of that class. Valhalla gets a scratch directory `${VALHALLA_ROOT}/work/<region>` (uid 59999, tiny: the image writes `file_hashes.txt` there) as `/custom_files`, with the release files mounted into it read-only; nothing goes to Docker's own storage. Pelias API and PIP read the release's `pelias.json`, whose `api.indexName` pins the concrete Elasticsearch index of that release, so there is no alias to switch: restore the index, switch `current`, restart. Each region also has a `pelias-<region>-interpolation` service (ports 33112/33122/33132) that the API reaches over `net-sw-dev-pelias`.
 
-**Status:** the roots, the `pelias-interpolation` service and the copy/activate scripts are **not implemented yet** (migration Phase B). Until then, `scripts/deploy.sh` (legacy data-pipeline tarballs, deprecated) is still the working path.
+**Tiles** live in Garage (see above). `data-manager` uploads `releases/<tag>/`, writes `current.json` last, writes `layer-20/tiles-release.env` (`PMTILES_URL=s3://swayrider-tiles/releases/<tag>/tiles.pmtiles`, git-ignored) and recreates `tilesservice` (`docker compose up -d --force-recreate tilesservice`); that last step goes away when tilesservice reloads on `current.json`.
+
+### Preparing the host
+
+```bash
+./scripts/prepare-host.sh           # report: vm.max_map_count, roots, ES/Garage directories, free space
+./scripts/prepare-host.sh --apply   # create the missing directories (chown commands that need root are printed)
+```
+
+### Manual fallback: `scripts/release.py`
+
+`data-manager` deploys by itself (the `compose-single-machine` driver); `scripts/release.py` does the same by hand with the same layout and semantics (valhalla, pelias, geodata; standard-library Python):
+
+```bash
+./scripts/release.py copy valhalla r-20261012-1 --from /mnt/hdd-pool/swayrider/data-repo/r-20261012-1   # verify sha256, unpack, rename .partial -> release
+./scripts/release.py activate valhalla r-20261012-1     # switch current (previous kept), restart the region services
+./scripts/release.py rollback valhalla                  # switch back to previous and restart
+./scripts/release.py list
+./scripts/release.py prune valhalla --keep 2
+./scripts/release.py es-restore r-20261012-1            # pelias: restore the snapshots of a copied release (activate does this too)
+```
+
+Order for a full release: geodata, valhalla, pelias (tiles go through data-manager). The legacy `scripts/deploy.sh` and `dev/scripts/deploy-*.sh` (data-pipeline tarballs) are deprecated.
+
+Procedure and rationale: [`Docs/MIGRATION-DATA-MANAGER.md`](../../Docs/MIGRATION-DATA-MANAGER.md) §3 and §6.
+
+**Status:** roots, `pelias-*-interpolation`, the read-only mounts, `release.py` and `prepare-host.sh` are in place. Not yet exercised against real data: that is the first deploy.

@@ -100,7 +100,7 @@
     "verbose": false
   },
   "mjolnir": {
-    "admin": "/custom_files/admin_data/admin.sqlite",
+    "admin": "/custom_files/admin.sqlite",
     "data_processing": {
       "allow_alt_name": false,
       "apply_country_overrides": true,
@@ -136,7 +136,7 @@
     "shortcuts": true,
     "tile_dir": "/custom_files/valhalla_tiles",
     "tile_extract": "/custom_files/valhalla_tiles.tar",
-    "timezone": "/custom_files/timezone_data/tz_world.sqlite",
+    "timezone": "/custom_files/tz_world.sqlite",
     "transit_dir": "/custom_files/transit_tiles",
     "transit_feeds_dir": "/gtfs_feeds",
     "transit_pbf_limit": 20000,

@@ -31,9 +31,28 @@ services:
       - "server_threads=${VALHALLA_SERVER_THREADS}"
     ports:
       - "33001:8002"
+    # /custom_files is a scratch directory on the same disk as the releases (${VALHALLA_ROOT}/work/<region>; the image
+    # writes file_hashes.txt etc. there, uid 59999); the release files are mounted into it read-only. `current` is resolved when the container starts, so a restart picks up a new release.
     volumes:
-      - '${GEODATA_PATH}:/geodata'
-      - '${VALHALLA_DATA_PATH}/benelux:/custom_files'
+      - '${VALHALLA_ROOT}/work/benelux:/custom_files'
+      - type: bind
+        source: ${VALHALLA_ROOT}/current/benelux/valhalla_tiles.tar
+        target: /custom_files/valhalla_tiles.tar
+        read_only: true
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ${VALHALLA_ROOT}/current/benelux/admin.sqlite
+        target: /custom_files/admin.sqlite
+        read_only: true
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ${VALHALLA_ROOT}/current/benelux/tz_world.sqlite
+        target: /custom_files/tz_world.sqlite
+        read_only: true
+        bind:
+          create_host_path: false
       - './valhalla/benelux/valhalla.json:/custom_files/valhalla.json:ro'
     networks:
       - net-sw-dev-valhalla
@@ -52,9 +71,28 @@ services:
       - "server_threads=${VALHALLA_SERVER_THREADS}"
     ports:
       - "33002:8002"
+    # /custom_files is a scratch directory on the same disk as the releases (${VALHALLA_ROOT}/work/<region>; the image
+    # writes file_hashes.txt etc. there, uid 59999); the release files are mounted into it read-only. `current` is resolved when the container starts, so a restart picks up a new release.
     volumes:
-      - '${GEODATA_PATH}:/geodata'
-      - '${VALHALLA_DATA_PATH}/france:/custom_files'
+      - '${VALHALLA_ROOT}/work/france:/custom_files'
+      - type: bind
+        source: ${VALHALLA_ROOT}/current/france/valhalla_tiles.tar
+        target: /custom_files/valhalla_tiles.tar
+        read_only: true
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ${VALHALLA_ROOT}/current/france/admin.sqlite
+        target: /custom_files/admin.sqlite
+        read_only: true
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ${VALHALLA_ROOT}/current/france/tz_world.sqlite
+        target: /custom_files/tz_world.sqlite
+        read_only: true
+        bind:
+          create_host_path: false
       - './valhalla/france/valhalla.json:/custom_files/valhalla.json:ro'
     networks:
       - net-sw-dev-valhalla
@@ -73,9 +111,28 @@ services:
       - "server_threads=${VALHALLA_SERVER_THREADS}"
     ports:
       - "33003:8002"
+    # /custom_files is a scratch directory on the same disk as the releases (${VALHALLA_ROOT}/work/<region>; the image
+    # writes file_hashes.txt etc. there, uid 59999); the release files are mounted into it read-only. `current` is resolved when the container starts, so a restart picks up a new release.
     volumes:
-      - '${GEODATA_PATH}:/geodata'
-      - '${VALHALLA_DATA_PATH}/germany:/custom_files'
+      - '${VALHALLA_ROOT}/work/germany:/custom_files'
+      - type: bind
+        source: ${VALHALLA_ROOT}/current/germany/valhalla_tiles.tar
+        target: /custom_files/valhalla_tiles.tar
+        read_only: true
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ${VALHALLA_ROOT}/current/germany/admin.sqlite
+        target: /custom_files/admin.sqlite
+        read_only: true
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ${VALHALLA_ROOT}/current/germany/tz_world.sqlite
+        target: /custom_files/tz_world.sqlite
+        read_only: true
+        bind:
+          create_host_path: false
       - './valhalla/germany/valhalla.json:/custom_files/valhalla.json:ro'
     networks:
       - net-sw-dev-valhalla
@@ -93,8 +150,12 @@ services:
     ports:
       - "33100:3000"
     volumes:
-      - '${GEODATA_PATH}:/geodata'
-      - "${PELIAS_DATA_PATH}/placeholder/data:/data"
+      - type: bind
+        source: ${PELIAS_ROOT}/current/placeholder/data
+        target: /data
+        read_only: true
+        bind:
+          create_host_path: false
     networks:
       - net-sw-dev-pelias
 
@@ -116,11 +177,61 @@ services:
     ports:
       - "33110:3102"
     volumes:
-      - '${GEODATA_PATH}:/geodata'
-      - "${PELIAS_DATA_PATH}/benelux/pip/whosonfirst:/data/whosonfirst"
-      - "${PELIAS_DATA_PATH}/benelux/pip/config:/etc/config:ro"
+      - type: bind
+        source: ${PELIAS_ROOT}/current/benelux/wof
+        target: /data/whosonfirst
+        read_only: true
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ${PELIAS_ROOT}/current/benelux/pelias.json
+        target: /etc/config/pelias.json
+        read_only: true
+        bind:
+          create_host_path: false
     networks:
       - net-sw-dev-pelias
+
+  pelias-benelux-interpolation:
+    image: pelias/interpolation:latest
+    container_name: sw-dev-pelias-benelux-interpolation
+    restart: unless-stopped
+    # image CMD: ./interpolate server /data/interpolation/address.db /data/interpolation/street.db
+    ports:
+      - "33112:4300"
+    volumes:
+      - type: bind
+        source: ${PELIAS_ROOT}/current/benelux/interpolation
+        target: /data/interpolation
+        read_only: true
+        bind:
+          create_host_path: false
+    networks:
+      - net-sw-dev-pelias
+
+  pelias-benelux-api:
+    image: pelias/api:latest
+    container_name: sw-dev-pelias-benelux-api
+    restart: unless-stopped
+    depends_on:
+      - pelias-benelux-pip
+      - pelias-benelux-interpolation
+      - pelias-libpostal
+      - pelias-placeholder
+    environment:
+      - "PELIAS_CONFIG=/etc/config/pelias.json"
+    ports:
+      - "33111:3100"
+    volumes:
+      - type: bind
+        source: ${PELIAS_ROOT}/current/benelux/pelias.json
+        target: /etc/config/pelias.json
+        read_only: true
+        bind:
+          create_host_path: false
+    networks:
+      - net-sw-dev-pelias
+      - net-sw-dev-data
 
   pelias-france-pip:
     image: pelias/pip-service:latest
@@ -131,45 +242,37 @@ services:
     ports:
       - "33120:3102"
     volumes:
-      - '${GEODATA_PATH}:/geodata'
-      - "${PELIAS_DATA_PATH}/france/pip/whosonfirst:/data/whosonfirst"
-      - "${PELIAS_DATA_PATH}/france/pip/config:/etc/config:ro"
+      - type: bind
+        source: ${PELIAS_ROOT}/current/france/wof
+        target: /data/whosonfirst
+        read_only: true
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ${PELIAS_ROOT}/current/france/pelias.json
+        target: /etc/config/pelias.json
+        read_only: true
+        bind:
+          create_host_path: false
     networks:
       - net-sw-dev-pelias
 
-  pelias-germany-pip:
-    image: pelias/pip-service:latest
-    container_name: sw-dev-germany-pip
+  pelias-france-interpolation:
+    image: pelias/interpolation:latest
+    container_name: sw-dev-pelias-france-interpolation
     restart: unless-stopped
-    environment:
-      - "PELIAS_CONFIG=/etc/config/pelias.json"
+    # image CMD: ./interpolate server /data/interpolation/address.db /data/interpolation/street.db
     ports:
-      - "33130:3102"
+      - "33122:4300"
     volumes:
-      - '${GEODATA_PATH}:/geodata'
-      - "${PELIAS_DATA_PATH}/germany/pip/whosonfirst:/data/whosonfirst"
-      - "${PELIAS_DATA_PATH}/germany/pip/config:/etc/config:ro"
+      - type: bind
+        source: ${PELIAS_ROOT}/current/france/interpolation
+        target: /data/interpolation
+        read_only: true
+        bind:
+          create_host_path: false
     networks:
       - net-sw-dev-pelias
-
-  pelias-benelux-api:
-    image: pelias/api:latest
-    container_name: sw-dev-pelias-benelux-api
-    restart: unless-stopped
-    depends_on:
-      - pelias-benelux-pip
-      - pelias-libpostal
-      - pelias-placeholder
-    environment:
-      - "PELIAS_CONFIG=/etc/config/pelias.json"
-    ports:
-      - "33111:3100"
-    volumes:
-      - '${GEODATA_PATH}:/geodata'
-      - "${PELIAS_DATA_PATH}/benelux/api/config:/etc/config:ro"
-    networks:
-      - net-sw-dev-pelias
-      - net-sw-dev-data
 
   pelias-france-api:
     image: pelias/api:latest
@@ -177,6 +280,7 @@ services:
     restart: unless-stopped
     depends_on:
       - pelias-france-pip
+      - pelias-france-interpolation
       - pelias-libpostal
       - pelias-placeholder
     environment:
@@ -184,11 +288,56 @@ services:
     ports:
       - "33121:3100"
     volumes:
-      - '${GEODATA_PATH}:/geodata'
-      - "${PELIAS_DATA_PATH}/france/api/config:/etc/config:ro"
+      - type: bind
+        source: ${PELIAS_ROOT}/current/france/pelias.json
+        target: /etc/config/pelias.json
+        read_only: true
+        bind:
+          create_host_path: false
     networks:
       - net-sw-dev-pelias
       - net-sw-dev-data
+
+  pelias-germany-pip:
+    image: pelias/pip-service:latest
+    container_name: sw-dev-pelias-germany-pip
+    restart: unless-stopped
+    environment:
+      - "PELIAS_CONFIG=/etc/config/pelias.json"
+    ports:
+      - "33130:3102"
+    volumes:
+      - type: bind
+        source: ${PELIAS_ROOT}/current/germany/wof
+        target: /data/whosonfirst
+        read_only: true
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ${PELIAS_ROOT}/current/germany/pelias.json
+        target: /etc/config/pelias.json
+        read_only: true
+        bind:
+          create_host_path: false
+    networks:
+      - net-sw-dev-pelias
+
+  pelias-germany-interpolation:
+    image: pelias/interpolation:latest
+    container_name: sw-dev-pelias-germany-interpolation
+    restart: unless-stopped
+    # image CMD: ./interpolate server /data/interpolation/address.db /data/interpolation/street.db
+    ports:
+      - "33132:4300"
+    volumes:
+      - type: bind
+        source: ${PELIAS_ROOT}/current/germany/interpolation
+        target: /data/interpolation
+        read_only: true
+        bind:
+          create_host_path: false
+    networks:
+      - net-sw-dev-pelias
 
   pelias-germany-api:
     image: pelias/api:latest
@@ -196,6 +345,7 @@ services:
     restart: unless-stopped
     depends_on:
       - pelias-germany-pip
+      - pelias-germany-interpolation
       - pelias-libpostal
       - pelias-placeholder
     environment:
@@ -203,9 +353,12 @@ services:
     ports:
       - "33131:3100"
     volumes:
-      - '${GEODATA_PATH}:/geodata'
-      - "${PELIAS_DATA_PATH}/germany/api/config:/etc/config:ro"
+      - type: bind
+        source: ${PELIAS_ROOT}/current/germany/pelias.json
+        target: /etc/config/pelias.json
+        read_only: true
+        bind:
+          create_host_path: false
     networks:
       - net-sw-dev-pelias
       - net-sw-dev-data
-
