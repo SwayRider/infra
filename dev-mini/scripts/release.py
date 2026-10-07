@@ -18,6 +18,7 @@ VALHALLA_ROOT, PELIAS_ROOT, GEODATA_ROOT (layer-10/20), ES_SNAPSHOTS_PATH (layer
 http://localhost:39200); SW_PREFIX (container prefix, default sw-dev).
 """
 import argparse
+import gzip
 import hashlib
 import json
 import os
@@ -90,7 +91,7 @@ def class_parts(doc: dict, cls: str) -> list[dict]:
 # --- package path -> target layout ------------------------------------------------------------------------------
 
 def target_of(cls: str, part: dict, tag: str) -> tuple[str, str]:
-    """(kind, relative target). kind: file | wof (tar.gz unpacked into <region>/wof/sqlite) | snapshot (tar unpacked
+    """(kind, relative target). kind: file | gunzip (the Placeholder store) | wof (tar.gz unpacked into <region>/wof/sqlite) | snapshot (tar unpacked
     into ES_SNAPSHOTS_PATH/<tag>/<region>)."""
     path = part["path"]
     if cls == "geodata":
@@ -98,6 +99,8 @@ def target_of(cls: str, part: dict, tag: str) -> tuple[str, str]:
     if cls == "valhalla":
         return "file", path.removeprefix("valhalla/")
     rel = path.removeprefix("pelias/")
+    if rel == "placeholder/store.sqlite3.gz":
+        return "gunzip", "placeholder/data/store.sqlite3"
     if rel.endswith("/wof.tar.gz"):
         return "wof", rel.removesuffix("/wof.tar.gz")
     if rel.endswith(".es-snapshot.tar"):
@@ -135,6 +138,16 @@ def unpack(src: Path, dest: Path, expected: str, *, flat_into: str | None = None
         tf.extractall(target, filter="data")
 
 
+def gunzip(src: Path, dst: Path, expected: str) -> None:
+    if sha256_of(src) != expected:
+        raise Fail(f"{src}: sha256 does not match package.json")
+    dst.parent.mkdir(parents=True, exist_ok=True)
+    tmp = dst.with_name(dst.name + ".tmp")
+    with gzip.open(src, "rb") as fin, open(tmp, "wb") as fout:
+        shutil.copyfileobj(fin, fout, 8 * 1024 * 1024)
+    os.replace(tmp, dst)
+
+
 def cmd_copy(args) -> None:
     cls, tag, pkg = args.cls, args.tag, Path(args.source)
     doc = read_package(pkg)
@@ -159,6 +172,8 @@ def cmd_copy(args) -> None:
             raise Fail(f"{src} is missing")
         if kind == "file":
             copy_file(src, partial / rel, p["sha256"])
+        elif kind == "gunzip":
+            gunzip(src, partial / rel, p["sha256"])
         elif kind == "wof":
             unpack(src, partial / rel / "wof", p["sha256"], flat_into="sqlite")
         else:
