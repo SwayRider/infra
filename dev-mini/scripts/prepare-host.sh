@@ -95,7 +95,7 @@ check_all() {
     ensure TILES_ROOT base
     ensure TILES_CACHE_PATH  # disk cache of tilesservice: an empty, writable directory
     ensure ES_DATA_PATH "" 1000
-    ensure ES_SNAPSHOTS_PATH "" 1000
+    ensure ES_SNAPSHOTS_PATH  # owned by you: data-manager unpacks the pelias snapshots here; Elasticsearch only reads them (read-only repository)
     ensure GARAGE_DATA_PATH
     ensure GARAGE_META_PATH
 
