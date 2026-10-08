@@ -6,7 +6,7 @@
 #   ./prepare-host.sh --apply    create missing directories; chown commands that need root are printed, not run
 #
 # Checks: vm.max_map_count >= 262144 (Elasticsearch), the roots of the data classes (VALHALLA_ROOT, PELIAS_ROOT,
-# GEODATA_ROOT, TILES_ROOT), the Elasticsearch and Garage directories, and free space per filesystem.
+# GEODATA_ROOT, TILES_ROOT), the tilesservice cache (TILES_CACHE_PATH), the Elasticsearch and Garage directories, and free space per filesystem.
 # Values come from the environment or layer-00/10/20 .env (never printed except as paths).
 
 set -uo pipefail
@@ -56,13 +56,14 @@ for r in benelux france germany; do ensure VALHALLA_ROOT "work/$r" 59999; done  
 ensure PELIAS_ROOT releases
 ensure GEODATA_ROOT releases
 ensure TILES_ROOT base
+ensure TILES_CACHE_PATH  # disk cache of tilesservice: an empty, writable directory
 ensure ES_DATA_PATH "" 1000
 ensure ES_SNAPSHOTS_PATH "" 1000
 ensure GARAGE_DATA_PATH
 ensure GARAGE_META_PATH
 
 echo "Free space"
-for var in VALHALLA_ROOT PELIAS_ROOT GEODATA_ROOT ES_DATA_PATH ES_SNAPSHOTS_PATH GARAGE_DATA_PATH; do
+for var in VALHALLA_ROOT PELIAS_ROOT GEODATA_ROOT TILES_CACHE_PATH ES_DATA_PATH ES_SNAPSHOTS_PATH GARAGE_DATA_PATH; do
     p="$(val "$var")"
     [[ -d "$p" ]] && printf '  %-18s %s free (%s)\n' "$var" "$(df -h --output=avail "$p" | tail -1 | tr -d ' ')" "$p"
 done
