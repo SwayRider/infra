@@ -48,8 +48,11 @@ done
 NODE_ID="$(jq -r '.nodes[0].id' "$OUT")"
 if [ "$(jq -r '.nodes[0].role == null' "$OUT")" = "true" ]; then
   echo "Assigning the single-node layout to $(printf %.16s "$NODE_ID")…"
-  must POST UpdateClusterLayout "{\"nodeId\":\"$NODE_ID\",\"zone\":\"$ZONE\",\"capacity\":$CAPACITY,\"tags\":[]}"
+  must POST UpdateClusterLayout "{\"roles\":[{\"id\":\"$NODE_ID\",\"zone\":\"$ZONE\",\"capacity\":$CAPACITY,\"tags\":[]}]}"
   must GET GetClusterLayout
+  # Garage ignores fields it does not know and answers 200, so check that the role really is staged
+  [ "$(jq -r '(.stagedRoleChanges // []) | length' "$OUT")" -ge 1 ] \
+    || { echo "error: UpdateClusterLayout was accepted but staged no role: $(cat "$OUT")" >&2; exit 1; }
   VERSION="$(jq -r '.version + 1' "$OUT")"
   must POST ApplyClusterLayout "{\"version\":$VERSION}"
   echo "Layout applied (version $VERSION)."
