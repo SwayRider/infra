@@ -10,12 +10,21 @@
 #                                  Q = quit
 #                                after A or M the checks run again, so you see whether it worked
 #
-# Checks: vm.max_map_count >= 262144 (Elasticsearch), the roots of the data classes (VALHALLA_ROOT, PELIAS_ROOT,
-# GEODATA_ROOT, TILES_ROOT), the tilesservice cache (TILES_CACHE_PATH), the Elasticsearch and Garage directories, and
-# free space per filesystem. Values come from the environment or layer-00/10/20 .env (never printed except as paths).
+# Shared access: the data directories belong to root and the group $DATA_GROUP (default swdata), setgid and with a default
+# ACL, so everybody in that group can deploy and nobody locks the others out: files that one user creates stay writable
+# for the group. The script creates the group, adds you to it and makes it active (it continues inside `sg`); other
+# administrators are added with `sudo usermod -aG swdata <name>`. Directories owned by a service (Elasticsearch data, the
+# Valhalla scratch) keep that service's uid.
+#
+# Checks: the group and the acl tools, vm.max_map_count >= 262144 (Elasticsearch), the roots of the data classes
+# (VALHALLA_ROOT, PELIAS_ROOT, GEODATA_ROOT, TILES_ROOT), the tilesservice cache (TILES_CACHE_PATH), the Elasticsearch and
+# Garage directories, and free space per filesystem. Values come from the environment or layer-00/10/20 .env (never
+# printed except as paths).
 
 set -uo pipefail
 INFRA="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+GROUP="${DATA_GROUP:-swdata}"
+ME="$(id -un)"
 APPLY=false
 case "${1:-}" in
     "" | --dry-run) ;;
@@ -23,8 +32,20 @@ case "${1:-}" in
     *) echo "usage: $0 [--dry-run | --apply]" >&2; exit 2 ;;
 esac
 
+group_exists()    { getent group "$GROUP" >/dev/null; }
+group_has_me()    { getent group "$GROUP" | cut -d: -f4 | tr ',' '\n' | grep -qx "$ME"; }
+group_in_shell()  { id -nG | tr ' ' '\n' | grep -qx "$GROUP"; }
+
+reexec_in_group() {  # continue inside the group, so the checks see what a deploy would see
+    echo "Group $GROUP is not active in this shell; continuing inside it (sg)."
+    exec env PREPARE_HOST_SG=1 sg "$GROUP" -c "$(printf '%q ' "$0" "$@")"
+}
+if group_exists && group_has_me && ! group_in_shell && [[ -z "${PREPARE_HOST_SG:-}" ]]; then
+    reexec_in_group "$@"
+fi
+
 RC=0
-SYSTEM=() MKDIRS=() TREES=() LEAVES=()  # the fix, in the order it must run: kernel, create, hand new trees to you, give data dirs to their service user
+SYSTEM=() MKDIRS=() TREES=() LEAVES=()  # the fix, in the order it must run: system, create, share the new trees, give service dirs to their uid
 PLAN=()
 
 val() {  # val VAR: environment first, then the first layer .env that defines it
@@ -47,35 +68,68 @@ nearest_parent() {  # the closest existing ancestor of a path
     echo "$p"
 }
 
-ensure() {  # ensure VAR SUBDIR OWNER_UID
+share() {  # the commands that make a tree shared: root:GROUP, group read/write, setgid directories, default ACL
+    local t="$1"
+    TREES+=("sudo chown -R root:$GROUP '$t'"
+            "sudo chmod -R g+rwX '$t'"
+            "sudo find '$t' -type d -exec chmod g+s {} +"
+            "sudo setfacl -R -m g:$GROUP:rwX -m d:g:$GROUP:rwX '$t'")
+}
+
+ensure() {  # ensure VAR SUBDIR OWNER_UID   (no uid = shared through the group)
     local var="$1" sub="${2:-}" uid="${3:-}" root dir parent rel top
     root="$(val "$var")"
     if [[ -z "$root" || "$root" == /path/to/* ]]; then warn "$var is not set"; return; fi
     if [[ "$root$sub" =~ [^A-Za-z0-9_./@:+=\ -] ]]; then warn "$var: the path contains characters this script will not put in a command: $root"; return; fi
     dir="$root${sub:+/$sub}"
-    if [[ -d "$dir" ]]; then
-        ok "$var: $dir"
-    else
+    if [[ ! -d "$dir" ]]; then
         warn "$var: $dir does not exist"
         parent="$(nearest_parent "$dir")"
         rel="${dir#"$parent"/}"; top="$parent/${rel%%/*}"  # the first directory that does not exist yet: the new tree starts here
-        if [[ -w "$parent" ]]; then
-            MKDIRS+=("mkdir -p '$dir'")
-        else  # the parent belongs to someone else (often root): create with sudo, then hand the new tree to you
-            MKDIRS+=("sudo mkdir -p '$dir'")
-            TREES+=("sudo chown -R $(id -u):$(id -g) '$top'")
-        fi
-        [[ -n "$uid" && "$uid" != "$(id -u)" ]] && LEAVES+=("sudo chown -R $uid:$uid '$dir'")
+        if [[ -w "$parent" ]]; then MKDIRS+=("mkdir -p '$dir'"); else MKDIRS+=("sudo mkdir -p '$dir'"); fi
+        share "$top"
+        [[ -n "$uid" ]] && LEAVES+=("sudo chown -R $uid:$uid '$dir'")
         return
     fi
-    if [[ -n "$uid" && "$(stat -c %u "$dir")" != "$uid" ]]; then
-        warn "$var: $dir is not owned by uid $uid"
-        LEAVES+=("sudo chown -R $uid:$uid '$dir'")
+    if [[ -n "$uid" ]]; then
+        if [[ "$(stat -c %u "$dir")" != "$uid" ]]; then
+            warn "$var: $dir is not owned by uid $uid"
+            LEAVES+=("sudo chown -R $uid:$uid '$dir'")
+        else
+            ok "$var: $dir"
+        fi
+    elif [[ "$(stat -c %G "$dir")" != "$GROUP" || ! -g "$dir" || ! -w "$dir" ]]; then
+        warn "$var: $dir is not shared through the group $GROUP (group, setgid and write access for you)"
+        share "$dir"
+    else
+        ok "$var: $dir"
     fi
 }
 
 check_all() {
     RC=0 SYSTEM=() MKDIRS=() TREES=() LEAVES=() PLAN=()
+    echo "Access"
+    if ! group_exists; then
+        warn "the group $GROUP does not exist"
+        SYSTEM+=("sudo groupadd $GROUP")
+    else
+        ok "group $GROUP exists (gid $(getent group "$GROUP" | cut -d: -f3))"
+    fi
+    if ! group_exists || ! group_has_me; then
+        warn "$ME is not a member of $GROUP"
+        SYSTEM+=("sudo usermod -aG $GROUP $ME")
+    elif ! group_in_shell; then
+        warn "$ME is a member of $GROUP, but this shell does not have the group yet: log in again or run 'newgrp $GROUP'"
+    else
+        ok "$ME is a member of $GROUP"
+    fi
+    if command -v setfacl >/dev/null; then
+        ok "setfacl is installed"
+    else
+        warn "setfacl (package acl) is not installed"
+        SYSTEM+=("sudo apt-get install -y acl")
+    fi
+
     echo "Kernel"
     local mm
     mm="$(cat /proc/sys/vm/max_map_count 2>/dev/null || echo 0)"
@@ -95,7 +149,7 @@ check_all() {
     ensure TILES_ROOT base
     ensure TILES_CACHE_PATH  # disk cache of tilesservice: an empty, writable directory
     ensure ES_DATA_PATH "" 1000
-    ensure ES_SNAPSHOTS_PATH  # owned by you: data-manager unpacks the pelias snapshots here; Elasticsearch only reads them (read-only repository)
+    ensure ES_SNAPSHOTS_PATH  # shared: data-manager unpacks the pelias snapshots here; Elasticsearch only reads them
     ensure GARAGE_DATA_PATH
     ensure GARAGE_META_PATH
 
@@ -123,10 +177,19 @@ show_plan() {
     printf '  %s\n' "${PLAN[@]}"
 }
 
+shell_note() {  # this process runs inside sg, the shell you started it from may not have the group yet
+    if [[ -n "${PREPARE_HOST_SG:-}" ]]; then
+        echo
+        echo "Your own shell does not have the group $GROUP yet: log in again, or run 'newgrp $GROUP' before you start"
+        echo "debug.sh or the worker from it (otherwise they cannot write to the shared directories)."
+    fi
+}
+
 check_all
 if (( ${#PLAN[@]} == 0 )); then
     echo
     [[ $RC -eq 0 ]] && echo "Everything is in place." || echo "Nothing this script can fix: see the WARN lines."
+    shell_note
     exit $RC
 fi
 
@@ -164,11 +227,16 @@ while (( ${#PLAN[@]} )); do
         *) echo "Answer A, M or Q."; continue ;;
     esac
     echo
+    if group_exists && group_has_me && ! group_in_shell && [[ -z "${PREPARE_HOST_SG:-}" ]]; then
+        echo "The group $GROUP now exists with you in it."
+        reexec_in_group  # the report that follows runs inside the group
+    fi
     echo "Checking again..."
     check_all
     if (( ${#PLAN[@]} == 0 )); then
         echo
         [[ $RC -eq 0 ]] && echo "Done: everything is in place." || echo "The commands worked; the remaining WARN lines are not something this script can fix."
+        shell_note
         exit $RC
     fi
     echo
