@@ -74,4 +74,4 @@ Order for a full release: geodata, valhalla, pelias (tiles go through data-manag
 
 Procedure and rationale: [`Docs/MIGRATION-DATA-MANAGER.md`](../../Docs/MIGRATION-DATA-MANAGER.md) §3 and §6.
 
-**Status:** roots, `pelias-*-interpolation`, the read-only mounts, `release.py` and `prepare-host.sh` are in place. Not yet exercised against real data: that is the first deploy.
+**Status (2026-10-10):** the first real deploy has been done with `data-manager` (geodata, valhalla, pelias and tiles of package `r-20261007-1`; pelias redeployed twice after fixes). Verified: tiles read from Garage by tilesservice, pelias street search and house-number interpolation for benelux. Not verified yet: rollback and failure drills, tiles through the gateway, routing and region lookups, pelias for France and Germany. `release.py` has not been exercised against real data. Runbook: [`data-manager/DEPLOY-DEV-MINI.md`](../../data-manager/DEPLOY-DEV-MINI.md).
