@@ -24,10 +24,10 @@ Infrastructure (Docker Compose)
 └── Layer 30: SwayRider web services (swayrider-api gateway)
 
 Data Manager (Python, build host; replaces the deprecated data-pipeline)
-└── OSM/Valhalla/Pelias/border builds, planet PMTiles + styles; releases copied to the target
+└── OSM/Valhalla/Pelias/border builds, planet PMTiles + styles; packages deployed to the target (dev-mini: per-class roots + Garage)
 ```
 
-See [`Docs/MIGRATION-DATA-MANAGER.md`](../Docs/MIGRATION-DATA-MANAGER.md) for the migration steps and the copy-based deployment strategy (per-artifact roots, `current` symlinks).
+See [`Docs/MIGRATION-DATA-MANAGER.md`](../Docs/MIGRATION-DATA-MANAGER.md) for the migration status and steps, and the deployment strategy (per-artifact roots, `current` symlinks, object store for tiles).
 
 ## Services
 
@@ -99,9 +99,19 @@ API-testing collections (Bruno) live in the separate `testing` repo, not in `inf
 
 ## Data Manager (and the deprecated Data Pipeline)
 
-`data-manager/` builds the geodata and publishes it as releases that are **copied** to the target server (see [`Docs/MIGRATION-DATA-MANAGER.md`](../Docs/MIGRATION-DATA-MANAGER.md)). Planned `infra/data-manager/compose.yaml` holds its dedicated Redis (`sw-datamanager-redis`, host port 36389).
+`data-manager/` (its own repo) builds the geodata, packs it into tagged **packages** and **deploys** them. It replaces `data-pipeline/`. The first real deploy to `dev-mini` has been done (2026-10); the rollback drill and the cutover of the app are still open (see the status in [`Docs/MIGRATION-DATA-MANAGER.md`](../Docs/MIGRATION-DATA-MANAGER.md)).
 
-> **Deprecated:** the sections below describe the legacy `data-pipeline/` MBTiles output (tile layers L0–L3 and the `places` layer). They stay until tilesservice is migrated to PMTiles (migration Phase G) and are not valid for the Protomaps planet tiles.
+How a deploy reaches `dev-mini`:
+
+- **Per-class roots** (`VALHALLA_ROOT`, `PELIAS_ROOT`, `GEODATA_ROOT`, `TILES_ROOT`, `ES_SNAPSHOTS_PATH`; see each layer's `env.example`): the deploy copies a release to `<ROOT>/releases/<tag>`, verifies it, flips the relative `current` link and recreates the services of the class. A target keeps only `current` and `previous`. The directories are shared between administrators through the Unix group `swdata` (setgid, default ACL), prepared by [`dev-mini/scripts/prepare-host.sh`](dev-mini/scripts/prepare-host.sh).
+- **Tiles** go to **Garage** (S3-compatible object store in `dev-mini/layer-00`), not to a directory: the deploy uploads `releases/<tag>/`, writes `current.json` last and `dev-mini/layer-20/tiles-release.env` (`PMTILES_URL=s3://swayrider-tiles/releases/<tag>/tiles.pmtiles`), then recreates `tilesservice` (read-only key, network `net-sw-dev-data`).
+- **Pelias:** the deploy restores the package's ES snapshot into a pinned index (`pelias.json` `api.indexName`) and restarts pip/interpolation/api; interpolation runs as `pelias-<region>-interpolation` on `PORT=4300`.
+
+Where to read more: [`data-manager/README.md`](../data-manager/README.md) (prerequisites, how to start; currently a debug build), [`data-manager/DEPLOY-DEV-MINI.md`](../data-manager/DEPLOY-DEV-MINI.md) (runbook), [`data-manager/RELEASE-CONTRACT.md`](../data-manager/RELEASE-CONTRACT.md) (package and deploy contract), [`dev-mini/README.md`](dev-mini/README.md) (target layout, Garage, manual fallback `release.py`).
+
+A compose file for data-manager's dedicated Redis (`infra/data-manager/compose.yaml`, `sw-datamanager-redis`, host port 36389) is referenced by the data-manager README but is **not in this repo yet**.
+
+> **Deprecated:** the sections below describe the legacy `data-pipeline/` MBTiles output (tile layers L0–L3 and the `places` layer), replaced by data-manager and the Protomaps planet PMTiles. They stay until the legacy `base` tileset is removed (migration Phase G) and are not valid for the planet tiles. The scripts `dev/scripts/deploy-*.sh` and `dev-mini/scripts/deploy.sh` that unpack the old data-pipeline tarballs are deprecated as well.
 
 The Python data pipeline (`data-pipeline/`) processed OpenStreetMap (OSM) data into MBTiles
 files served by the tile backend.
