@@ -2,6 +2,9 @@
 #
 # deploy-border.sh - Deploy border data to geodata directory
 #
+# DEPRECATED: legacy data-pipeline deploy; replaced by the copy-based release deploy of
+# data-manager (see Docs/MIGRATION-DATA-MANAGER.md section 3). Removed in migration Phase G.
+#
 # Usage:
 #   ./deploy-border.sh --input /path/to/pipeline-output [options]
 #

@@ -2,6 +2,9 @@
 #
 # deploy-valhalla.sh - Deploy Valhalla routing data
 #
+# DEPRECATED: legacy data-pipeline deploy; replaced by the copy-based release deploy of
+# data-manager (see Docs/MIGRATION-DATA-MANAGER.md section 3). Removed in migration Phase G.
+#
 # Usage:
 #   ./deploy-valhalla.sh --input /path/to/pipeline-output [options]
 #

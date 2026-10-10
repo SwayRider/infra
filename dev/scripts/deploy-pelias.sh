@@ -2,6 +2,9 @@
 #
 # deploy-pelias.sh - Deploy Pelias data and ES snapshots
 #
+# DEPRECATED: legacy data-pipeline deploy; replaced by the copy-based release deploy of
+# data-manager (see Docs/MIGRATION-DATA-MANAGER.md section 3). Removed in migration Phase G.
+#
 # Handles both pelias-es-snapshot.tar.bz2 and pelias-data.tar.bz2.
 # ES must be running for the snapshot restore step.
 #
