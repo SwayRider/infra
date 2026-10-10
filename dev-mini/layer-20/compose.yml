@@ -222,3 +222,4 @@ services:
       - "34005:8080"
     networks:
       - net-sw-dev-sw-internal
+      - net-sw-dev-data   # reaches sw-dev-garage (the PMTiles archive)
