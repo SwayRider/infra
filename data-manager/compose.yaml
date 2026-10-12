@@ -1,0 +1,65 @@
+networks:
+  net-sw-datamanager:
+    name: net-sw-datamanager
+    driver: bridge
+    attachable: true
+
+services:
+  # Dedicated RQ broker/queue for data-manager. Deliberately NOT the shared
+  # sw-dev-redis in infra/dev/layer-00 — see infra/data-manager/README.md.
+  redis:
+    image: redis:7-alpine
+    container_name: sw-datamanager-redis
+    restart: unless-stopped
+    command: >
+      redis-server
+      --maxmemory 256mb
+      --maxmemory-policy allkeys-lru
+      --save ""
+      --appendonly no
+    ports:
+      # Host-mapped so a host-run `flask run` / `python run_worker.py` (the
+      # normal Phase 0 development loop) can reach this same Redis for
+      # debugging, exactly as containers on net-sw-datamanager reach it via
+      # the internal hostname `redis`.
+      - "36389:6379"
+    networks:
+      - net-sw-datamanager
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: '${DATAMANAGER_REDIS_CPU_LIMIT:-0.5}'
+          memory: ${DATAMANAGER_REDIS_MEM_LIMIT:-384m}
+
+  # Reserved for running data-manager itself (Flask app + RQ worker) as an
+  # always-on stack once it's ready to be deployed that way. During Phase 0
+  # development, run wsgi.py / run_worker.py directly on the host instead —
+  # both paths target the same redis service above.
+  #
+  # app:
+  #   build: ../../data-manager
+  #   container_name: sw-datamanager-app
+  #   restart: unless-stopped
+  #   environment:
+  #     - REDIS_URL=redis://redis:6379/0
+  #   depends_on:
+  #     - redis
+  #   networks:
+  #     - net-sw-datamanager
+  #
+  # worker:
+  #   build: ../../data-manager
+  #   container_name: sw-datamanager-worker
+  #   restart: unless-stopped
+  #   command: ["python", "run_worker.py"]
+  #   environment:
+  #     - REDIS_URL=redis://redis:6379/0
+  #   depends_on:
+  #     - redis
+  #   networks:
+  #     - net-sw-datamanager
