@@ -206,8 +206,13 @@ services:
       - "SERVICE_PREFIX=${TILESSERVICE_PUBLIC_PATH_PREFIX}"
       - "AUTHSERVICE_HOST=authservice"
       - "AUTHSERVICE_PORT=8081"
-      # Planet tileset (PMTiles) from the object store, read-only key. PMTILES_URL comes from tiles-release.env,
-      # which the data-manager tiles deploy writes (s3://<bucket>/releases/<tag>/tiles.pmtiles) before recreating the container.
+      # Planet tileset (PMTiles) from the object store, read-only key.
+      # TILES_ROOT (not the host variable of the same name below) is the release store: tilesservice follows
+      # current.json in the bucket, which the data-manager tiles deploy writes last, and switches releases (tiles,
+      # styles, glyphs, sprites) without a restart. It takes precedence over PMTILES_URL.
+      - "TILES_ROOT=s3://${GARAGE_TILES_BUCKET:-swayrider-tiles}"
+      # Fallback while TILES_ROOT is unset: PMTILES_URL comes from tiles-release.env, which the data-manager tiles deploy
+      # writes (s3://<bucket>/releases/<tag>/tiles.pmtiles) before recreating the container. Ignored when TILES_ROOT is set.
       - "S3_ENDPOINT=${TILES_S3_ENDPOINT}"
       - "S3_REGION=garage"
       - "S3_ACCESS_KEY_ID=${TILES_S3_ACCESS_KEY_ID}"
