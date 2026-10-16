@@ -50,6 +50,8 @@ Compose mounts the files of `<ROOT>/current/...` read-only (`create_host_path: f
 
 **Tiles** live in Garage (see above). `data-manager` uploads `releases/<tag>/`, writes `current.json` last, writes `layer-20/tiles-release.env` (`PMTILES_URL=s3://swayrider-tiles/releases/<tag>/tiles.pmtiles`, git-ignored) and recreates `tilesservice` (`docker compose up -d --force-recreate tilesservice`); that last step goes away when tilesservice reloads on `current.json`.
 
+**Gateway service client.** `swayrider-api-register` (layer-20) registers the service client the gateway uses to get its service token (needed for every `/v1/tiles/*` request) and stores its credentials in the `sw-dev-api-credentials` volume. The gateway reads that file once, when its container starts. On each run the script asks authservice whether the stored client still exists and re-registers if it does not (for example after an authservice database reset); it also re-registers on a scope change or with `FORCE_REREGISTER=true`. **After a re-registration, recreate the gateway** (`docker compose -f layer-30/compose.yml up -d --force-recreate swayrider-api`), or it keeps the old credentials and fails with `service client authentication error`. If authservice cannot be reached, the script keeps the stored credentials and warns. Test the script with `sh layer-20/swayrider-api-register/test-init.sh`.
+
 ### Preparing the host
 
 ```bash
